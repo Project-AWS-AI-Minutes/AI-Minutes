@@ -1,0 +1,157 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>AI Minutes - Dashboard</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+    <link href="https://cdn.jsdelivr.net/npm/remixicon@4.2.0/fonts/remixicon.css" rel="stylesheet" />
+    <link rel="stylesheet" href="./assets/styles.css" />
+  </head>
+  <body>
+    <header class="mobile-topbar" aria-label="mobile navigation">
+      <button id="mobile-menu-btn" class="mobile-menu-btn" aria-label="메뉴 열기" aria-expanded="false">
+        <i class="ri-menu-line"></i>
+      </button>
+      <strong>AI Minutes</strong>
+    </header>
+    <div id="mobile-overlay" class="mobile-overlay" aria-hidden="true"></div>
+
+    <main class="workspace">
+      <aside class="sidebar">
+        <div class="brand-wrap">
+          <h1 class="logo"><i class="ri-bubble-chart-fill"></i> AI Minutes</h1>
+          <p class="muted">Meeting Archive</p>
+        </div>
+
+        <nav class="menu">
+          <a class="menu-item active" href="./index.html"><i class="ri-dashboard-line"></i> Dashboard</a>
+          <a class="menu-item" href="#"><i class="ri-user-star-line"></i> Assigned</a>
+          <a class="menu-item" href="#"><i class="ri-user-search-line"></i> Unassigned</a>
+          <a class="menu-item" href="#"><i class="ri-live-line"></i> Live</a>
+          <a class="menu-item" href="#"><i class="ri-archive-line"></i> Archive</a>
+          <a class="menu-item" href="#"><i class="ri-delete-bin-6-line"></i> Trash</a>
+        </nav>
+
+        <div class="pro-card">
+          <p class="muted">업로드 후 상태 전환</p>
+          <strong>UPLOADED → ... → COMPLETED</strong>
+        </div>
+      </aside>
+
+      <section class="mail-list-panel">
+        <div class="search-row">
+          <label class="sr-only" for="search">Search meetings</label>
+          <input id="search" class="search-input" placeholder="Search meetings" />
+          <button id="reload-btn" class="btn"><i class="ri-refresh-line"></i> 새로고침</button>
+        </div>
+
+        <section class="upload-block">
+          <h3>파일 업로드</h3>
+          <div id="upload-root"></div>
+        </section>
+
+        <section>
+          <h3>회의 목록</h3>
+          <div id="meeting-list" class="meeting-list"></div>
+          <p id="empty-state" class="muted hidden">회의 데이터가 없습니다.</p>
+        </section>
+      </section>
+
+      <section class="main-panel">
+        <header class="top-tabs" aria-label="dashboard tabs">
+          <button class="tab active">Overview</button>
+          <button class="tab">Timeline</button>
+          <button class="tab">Templates</button>
+          <button class="tab">Reports</button>
+        </header>
+
+        <article class="hero">
+          <p class="badge status-SUMMARIZING">PIPELINE</p>
+          <h2>AI 회의 요약 & To-Do 아카이브</h2>
+          <p class="muted">대시보드에서 회의 진행 상태를 확인하고, 상세 페이지에서 요약과 담당자별 할 일을 검토하세요.</p>
+        </article>
+
+        <section>
+          <div class="panel-head">
+            <h3>상태 분포</h3>
+            <span id="meeting-count" class="muted">총 0건</span>
+          </div>
+          <div id="status-stats" class="stat-grid"></div>
+        </section>
+
+        <section class="component-grid">
+          <article class="component-card">
+            <div class="panel-head"><h3>회의 운영 테이블</h3></div>
+            <div class="table-wrap">
+              <table class="app-table" aria-label="meeting ops table">
+                <thead>
+                  <tr>
+                    <th>회의명</th>
+                    <th>담당</th>
+                    <th>상태</th>
+                    <th>마감</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr><td>주간 제품 회의</td><td>민수</td><td>COMPLETED</td><td>03/03</td></tr>
+                  <tr><td>고객 인터뷰 회고</td><td>수연</td><td>SUMMARIZING</td><td>03/02</td></tr>
+                  <tr><td>파트너사 킥오프</td><td>Alex</td><td>FAILED</td><td>재처리</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </article>
+
+          <article class="component-card">
+            <div class="panel-head"><h3>빠른 등록 폼</h3></div>
+            <form class="app-form" onsubmit="event.preventDefault()">
+              <label>
+                회의 제목
+                <input type="text" placeholder="예: 스프린트 계획 회의" />
+              </label>
+              <label>
+                담당자
+                <select>
+                  <option>민수</option>
+                  <option>지현</option>
+                  <option>수연</option>
+                </select>
+              </label>
+              <label>
+                우선순위
+                <div class="inline-options" role="group" aria-label="priority">
+                  <label><input type="radio" name="priority" checked /> 보통</label>
+                  <label><input type="radio" name="priority" /> 높음</label>
+                </div>
+              </label>
+              <label>
+                메모
+                <textarea rows="4" placeholder="핵심 안건을 입력하세요"></textarea>
+              </label>
+              <button class="btn btn-primary" type="submit"><i class="ri-add-line"></i> 등록</button>
+            </form>
+          </article>
+        </section>
+      </section>
+
+      <aside class="info-panel">
+        <section class="info-card">
+          <h3>General Info</h3>
+          <p class="muted">현재 시스템은 mock API로 동작합니다.</p>
+        </section>
+        <section class="info-card">
+          <h3>최근 업데이트</h3>
+          <ul class="plain-list muted">
+            <li>회의 상세 페이지 개선</li>
+            <li>담당자별 To-Do 카드</li>
+            <li>반응형 레이아웃 지원</li>
+          </ul>
+        </section>
+      </aside>
+    </main>
+
+    <script type="module" src="./pages/dashboard.js"></script>
+  </body>
+</html>

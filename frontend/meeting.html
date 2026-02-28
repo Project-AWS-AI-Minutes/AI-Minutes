@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>AI Minutes - Meeting Detail</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+    <link href="https://cdn.jsdelivr.net/npm/remixicon@4.2.0/fonts/remixicon.css" rel="stylesheet" />
+    <link rel="stylesheet" href="./assets/styles.css" />
+  </head>
+  <body>
+    <header class="mobile-topbar" aria-label="mobile navigation">
+      <button id="mobile-menu-btn" class="mobile-menu-btn" aria-label="메뉴 열기" aria-expanded="false">
+        <i class="ri-menu-line"></i>
+      </button>
+      <strong>AI Minutes</strong>
+    </header>
+    <div id="mobile-overlay" class="mobile-overlay" aria-hidden="true"></div>
+
+    <main class="workspace detail">
+      <aside class="sidebar">
+        <div class="brand-wrap">
+          <h1 class="logo"><i class="ri-bubble-chart-fill"></i> AI Minutes</h1>
+          <p class="muted">Meeting Detail</p>
+        </div>
+        <a href="./index.html" class="btn btn-full"><i class="ri-arrow-left-line"></i> 대시보드</a>
+      </aside>
+
+      <section class="mail-list-panel">
+        <h3>담당자별 To-Do</h3>
+        <div id="todo-root" class="todo-list"></div>
+      </section>
+
+      <section class="main-panel">
+        <div class="panel-head">
+          <h2 id="meeting-title">회의 상세</h2>
+          <span id="meeting-meta" class="muted"></span>
+        </div>
+        <article class="hero">
+          <h3>요약</h3>
+          <div id="summary-content" class="summary"></div>
+        </article>
+      </section>
+
+      <aside class="info-panel">
+        <section class="info-card">
+          <h3>문서함</h3>
+          <ul class="plain-list muted">
+            <li>회의록 PDF</li>
+            <li>녹취 원본 링크</li>
+            <li>공유 드라이브</li>
+          </ul>
+        </section>
+      </aside>
+    </main>
+
+    <script type="module" src="./pages/meetingDetail.js"></script>
+  </body>
+</html>
