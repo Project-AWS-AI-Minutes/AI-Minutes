@@ -1,10 +1,10 @@
-# [Personal Framework] 주환님만의 AI 페어 프로그래밍 규칙 (팀 충돌 방지용)
+# [Personal Framework] AI 페어 프로그래밍 규칙 (팀 충돌 방지용)
 ai_context/
 
-# [Python] 가상환경 (용량이 크고 환경마다 다르므로 제외)
+# [Python] 가상환경
 ai-pipeline/venv/
 
-# [Security] 비밀 키 및 환경 변수 (절대 GitHub에 올리지 말 것)
+# [Security] 비밀 키 및 환경 변수
 ai-pipeline/.env
 .env
 
