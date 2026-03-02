@@ -1,10 +1,10 @@
 :root {
   --bg: #ffffff;
-  --text: #111318;
+  --text: #383838;
   --muted: #6b7280;
   --line: #d9dde3;
   --surface: #f7f8fa;
-  --brand: #1e1f23;
+  --brand: #383838;
 }
 
 * { box-sizing: border-box; }
