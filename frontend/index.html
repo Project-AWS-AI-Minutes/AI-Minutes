@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>AI Minutes - Dashboard</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="./assets/styles.css" />
+  </head>
+  <body>
+    <header class="mobile-topbar">
+      <button id="mobile-menu-btn" class="mobile-menu-btn" aria-label="메뉴 열기" aria-expanded="false">☰</button>
+      <strong>AI Minutes</strong>
+    </header>
+    <div id="mobile-overlay" class="mobile-overlay" aria-hidden="true"></div>
+
+    <main class="workspace">
+      <aside class="sidebar">
+        <h1>AI Minutes</h1>
+        <p class="muted">회의 요약 & To-Do</p>
+        <nav class="menu">
+          <a class="menu-item active" href="./index.html">Dashboard</a>
+          <a class="menu-item" href="#">Archive</a>
+          <a class="menu-item" href="#">Settings</a>
+        </nav>
+      </aside>
+
+      <section class="panel left-panel">
+        <div class="panel-head">
+          <h2>파일 업로드</h2>
+        </div>
+        <div id="upload-root"></div>
+
+        <hr class="divider" />
+
+        <div class="panel-head">
+          <h2>상태 요약</h2>
+          <span id="meeting-count" class="muted">총 0건</span>
+        </div>
+        <div id="status-stats" class="stat-grid"></div>
+      </section>
+
+      <section class="panel main-panel">
+        <div class="panel-head">
+          <h2>회의 목록</h2>
+          <button id="reload-btn" class="btn">새로고침</button>
+        </div>
+        <div id="meeting-list" class="meeting-list"></div>
+        <p id="empty-state" class="muted hidden">회의 데이터가 없습니다.</p>
+      </section>
+
+      <aside class="panel info-panel">
+        <h2>안내</h2>
+        <ul class="plain-list muted">
+          <li>업로드 후 상태가 순차적으로 변경됩니다.</li>
+          <li>회의를 클릭하면 요약/To-Do를 확인할 수 있습니다.</li>
+          <li>현재는 mock API 기반입니다.</li>
+        </ul>
+      </aside>
+    </main>
+
+    <script type="module" src="./pages/dashboard.js"></script>
+  </body>
+</html>

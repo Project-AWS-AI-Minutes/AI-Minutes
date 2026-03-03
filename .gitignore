@@ -1,17 +1,80 @@
+# =========================
+# AI-Minutes .gitignore
+# =========================
+
 # [Personal Framework] AI 페어 프로그래밍 규칙 (팀 충돌 방지용)
 ai_context/
 
-# [Python] 가상환경
+# [Python] 가상환경 및 캐시
 ai-pipeline/venv/
+__pycache__/
+*.py[cod]
 
 # [Security] 비밀 키 및 환경 변수
 ai-pipeline/.env
 .env
+.env.*
+!.env.example
+*.pem
+*.key
+*.crt
+*.p12
+*.jks
+*.kubeconfig
+kubeconfig
 
-# [Compiled] 파이썬 실행 캐시
-__pycache__/
-*.py[cod]
-
-# [IDE] 편집기 설정
+# OS / Editor
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
 .vscode/
 .idea/
+
+# Logs
+*.log
+logs/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Node / package artifacts
+node_modules/
+dist/
+build/
+.cache/
+
+# AWS / cloud credentials
+.aws/
+**/credentials
+**/config.local
+
+# Kubernetes local overrides / secrets
+*.secret.yaml
+*.secrets.yaml
+secrets.yaml
+
+# Docker local/runtime
+.docker/
+.docker-compose.override.yml
+*.tar
+
+# Test / coverage
+coverage/
+.nyc_output/
+
+# Runtime temp
+tmp/
+temp/
+*.tmp
+
+# Frontend local env files
+frontend/.env
+frontend/.env.*
+
+# Terraform (if added later)
+.terraform/
+*.tfstate
+*.tfstate.*
+crash.log

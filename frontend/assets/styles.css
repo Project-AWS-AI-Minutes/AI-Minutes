@@ -1,0 +1,155 @@
+:root {
+  --bg: #ffffff;
+  --text: #383838;
+  --muted: #6b7280;
+  --line: #d9dde3;
+  --surface: #f7f8fa;
+  --brand: #383838;
+}
+
+* { box-sizing: border-box; }
+html, body { margin: 0; background: var(--bg); color: var(--text); font-family: Inter, sans-serif; }
+
+.workspace {
+  width: 100%;
+  min-height: 100vh;
+  display: grid;
+  grid-template-columns: 240px 320px minmax(520px, 1fr) 280px;
+  gap: 12px;
+  padding: 0 12px 0 0;
+}
+
+.workspace.detail {
+  grid-template-columns: 240px minmax(560px, 1fr) 340px;
+}
+
+.sidebar {
+  background: var(--brand);
+  color: #f3f4f6;
+  padding: 16px;
+  min-height: 100vh;
+}
+.sidebar h1 { margin: 0 0 8px; font-size: 22px; }
+.sidebar .muted { color: #b9bfca; }
+.menu { display: grid; gap: 6px; margin-top: 14px; }
+.menu-item { color: #e5e7eb; text-decoration: none; padding: 9px 10px; border: 1px solid transparent; }
+.menu-item:hover { background: #2a2c33; }
+.menu-item.active { background: #fff; color: #111318; font-weight: 600; }
+
+.panel {
+  margin: 12px 0;
+  border: 1px solid var(--line);
+  background: #fff;
+  padding: 14px;
+}
+
+.panel-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+.panel h2 { margin: 0; font-size: 18px; }
+
+.divider { border: 0; border-top: 1px solid var(--line); margin: 14px 0; }
+
+.meeting-list, .todo-list, .stat-grid { display: grid; gap: 10px; }
+.stat-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+
+.meeting-item, .todo-card, .stat-card, .summary-card {
+  border: 1px solid var(--line);
+  background: var(--surface);
+  padding: 10px;
+}
+.meeting-item-head { display: flex; justify-content: space-between; gap: 8px; }
+.meeting-item h3, .todo-card h4, .summary-card h3 { margin: 0 0 6px; }
+
+.badge { font-size: 11px; font-weight: 700; border: 1px solid var(--line); padding: 3px 6px; }
+.status-UPLOADED, .status-TRANSCRIBING, .status-SUMMARIZING, .status-TODO_EXTRACTING { background: #e8edf4; color: #334155; }
+.status-COMPLETED { background: #e4f6ee; color: #0f766e; }
+.status-FAILED { background: #fbe8e8; color: #b91c1c; }
+
+.upload-zone { border: 1px dashed #9ca3af; background: #fafafa; padding: 14px; text-align: center; }
+.upload-zone.dragover { background: #f3f4f6; }
+.progress-wrap { width: 100%; height: 8px; background: #e5e7eb; margin-top: 10px; }
+.progress-bar { width: 0; height: 100%; background: var(--brand); transition: width .2s ease; }
+
+.btn {
+  border: 1px solid var(--brand);
+  background: #fff;
+  color: var(--brand);
+  padding: 7px 10px;
+  text-decoration: none;
+  cursor: pointer;
+}
+.btn:hover { background: var(--brand); color: #fff; }
+
+.link { color: var(--brand); }
+.muted { color: var(--muted); }
+.hidden { display: none; }
+.summary { white-space: pre-wrap; line-height: 1.6; }
+.plain-list { margin: 0; padding-left: 18px; }
+
+.mobile-topbar, .mobile-menu-btn, .mobile-overlay { display: none; }
+
+@media (max-width: 1080px) {
+  .mobile-topbar {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    height: 56px;
+    padding: 0 10px;
+    border-bottom: 1px solid var(--line);
+    position: sticky;
+    top: 0;
+    background: #fff;
+    z-index: 30;
+  }
+
+  .mobile-menu-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 38px;
+    height: 38px;
+    border: 1px solid #bfc6d1;
+    background: #fff;
+    cursor: pointer;
+  }
+
+  .workspace, .workspace.detail {
+    grid-template-columns: 1fr;
+    padding: 8px;
+    min-height: calc(100vh - 56px);
+  }
+
+  .sidebar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    width: 240px;
+    z-index: 40;
+    transform: translateX(-100%);
+    transition: transform .2s ease;
+  }
+
+  .sidebar.is-open { transform: translateX(0); }
+
+  .mobile-overlay {
+    display: block;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,.3);
+    opacity: 0;
+    pointer-events: none;
+    z-index: 35;
+    transition: opacity .2s ease;
+  }
+
+  .mobile-overlay.is-open { opacity: 1; pointer-events: auto; }
+
+  .panel { margin: 0; }
+  body.sidebar-open { overflow: hidden; }
+}

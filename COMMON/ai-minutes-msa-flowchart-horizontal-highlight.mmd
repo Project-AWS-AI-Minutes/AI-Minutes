@@ -1,0 +1,83 @@
+flowchart LR
+
+%% =======================
+%% INTERNET
+%% =======================
+
+USER[User Browser]
+IGW[Internet Gateway]
+
+%% =======================
+%% VPC
+%% =======================
+
+subgraph VPC
+
+subgraph Public_Subnet
+ALB[Application Load Balancer]
+NAT[NAT Gateway]
+end
+
+subgraph Private_Subnet
+
+subgraph ECS_Cluster
+FE[ECS Service - Frontend]
+CORE[ECS Service - Core API]
+AI[ECS Service - AI Worker]
+end
+
+RDS[(Amazon RDS)]
+SQS[(Amazon SQS)]
+DLQ[(Dead Letter Queue)]
+end
+
+S3[(Amazon S3)]
+TRANS[AWS Transcribe]
+OPENAI[OpenAI API]
+
+end
+
+%% =======================
+%% CI/CD
+%% =======================
+
+GHA[GitHub Actions]
+ECR[Amazon ECR]
+
+%% =======================
+%% TRAFFIC FLOW
+%% =======================
+
+USER --> IGW
+IGW --> ALB
+ALB --> FE
+ALB --> CORE
+
+FE --> CORE
+
+CORE --> RDS
+CORE --> S3
+CORE --> SQS
+
+SQS --> AI
+SQS --> DLQ
+
+AI --> TRANS
+AI --> OPENAI
+AI --> RDS
+
+%% =======================
+%% CI/CD FLOW
+%% =======================
+
+GHA --> ECR
+ECR --> FE
+ECR --> CORE
+ECR --> AI
+
+%% =======================
+%% OUTBOUND INTERNET
+%% =======================
+
+AI --> NAT
+NAT --> OPENAI
