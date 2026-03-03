@@ -3,9 +3,9 @@
 **목표:** AWS SQS 메시지를 수신하여 음성을 텍스트로 변환(STT)하고, LLM을 통해 요약 및 To-Do를 추출하여 Core API(DB)에 전달한다.
 
 ## 🏃‍♂️ Phase 1: 개발 환경 및 클라우드 연동 세팅
-- [ ] 파이썬 가상환경 세팅 및 필수 라이브러리 설치 (`boto3`, `openai`, `requests` 등)
-- [ ] AWS IAM 권한 설정 (S3 읽기, SQS 읽기/삭제, Transcribe 접근 권한)
-- [ ] 환경 변수(`.env`) 세팅 (AWS Access Key, OpenAI API Key 등 - **절대 GitHub에 올리지 말 것!**)
+- [v] 파이썬 가상환경 세팅 및 필수 라이브러리 설치 (`boto3`, `openai`, `requests` 등)
+- [v] AWS IAM 권한 설정 (S3 읽기, SQS 읽기/삭제, Transcribe 접근 권한)
+- [v] 환경 변수(`.env`) 세팅 (AWS Access Key, OpenAI API Key 등 - **절대 GitHub에 올리지 말 것!**)
 
 ## 📡 Phase 2: SQS 통신 및 데이터베이스 연동
 - [ ] AWS SQS 폴링(Polling) 리스너 구현 (새 메시지가 올 때까지 대기하고 낚아채기)

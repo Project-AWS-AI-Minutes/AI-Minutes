@@ -34,5 +34,5 @@
 
 ## ⚖️ Development Rules
 - 모든 코드는 `ai_context/default/GUIDELINES.md`의 규칙을 최우선으로 준수한다. [cite: Saved Information]
-- 데이터베이스 연동 및 API 통신 시 `LMS_RULES.md`에 정의된 네이밍 컨벤션(Snake/Camel Case)을 따른다. [cite: Saved Information]
+- 데이터베이스 연동 및 API 통신 시 `AWS_RULES.md`에 정의된 네이밍 컨벤션(Snake/Camel Case)을 따른다. [cite: Saved Information]
 - 작업 진행 상황은 `docs/SA-Todo.md`에 업데이트하여 팀원들과 공유한다. [cite: Saved Information]
