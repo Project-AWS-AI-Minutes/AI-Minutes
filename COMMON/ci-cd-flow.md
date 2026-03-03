@@ -28,3 +28,4 @@ flowchart LR
 - 실패 시 롤백 방식
 - 배포 승인 권한자
 - 시크릿 주입 방식
+- CloudWatch Alarm 및 Email 알림 연동 방식

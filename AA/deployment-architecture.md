@@ -14,6 +14,7 @@ Frontend 서비스를 ECS(Fargate), ALB, CodeDeploy 기반 Blue-Green 구조로 
 - ALB 1개
 - Target Group 2개 (`Blue`, `Green`)
 - CodeDeploy
+- CloudWatch Logs / CloudWatch Alarms
 
 ---
 
@@ -66,4 +67,7 @@ Frontend 서비스를 ECS(Fargate), ALB, CodeDeploy 기반 Blue-Green 구조로 
 - 환경변수(API Base URL) 검증
 - CORS 정책 확인
 - 정적 리소스 캐시 정책 확인
-- 로그/모니터링 대시보드 연결
+- ECS 로그의 CloudWatch Logs 수집 확인
+- ALB 5xx, RDS CPU, RDS Connection, `FAILED` 증가 알림 확인
+- CloudWatch Logs 30일 보관 설정 확인
+- Email 알림 채널 연결 확인

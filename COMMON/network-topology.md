@@ -25,6 +25,13 @@ flowchart TB
     AI --> DB
     AI --> OS
     AI --> EXT[외부 STT/LLM API]
+    FE --> CWL[CloudWatch Logs]
+    API --> CWL
+    APIG --> CWL
+    AI --> CWL
+    ALB --> CWM[CloudWatch Metrics / Alarms]
+    DB --> CWM
+    CWM --> EMAIL[Email Alert]
 ```
 
 ## 보안 기본 규칙
@@ -35,4 +42,5 @@ flowchart TB
 ## 운영 고려 항목
 - 사내망/VPN 접근 정책
 - 방화벽 인바운드 규칙
-- 로그 수집 경로
+- CloudWatch Logs 수집 경로
+- Email 알림 수신자 관리

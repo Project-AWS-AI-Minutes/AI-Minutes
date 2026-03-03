@@ -8,6 +8,8 @@
 - AI Processing Service
 - DB(PostgreSQL)
 - Object Storage(오디오/결과 파일)
+- CloudWatch Logs / CloudWatch Alarms
+- Email Alert
 - External STT/LLM API
 
 ## Mermaid Diagram
@@ -21,6 +23,11 @@ flowchart LR
     B --> E[AI Processing Service]
     E --> C
     E --> D
+    B --> G[CloudWatch Logs]
+    E --> G
+    L --> H[CloudWatch Metrics / Alarms]
+    C --> H
+    H --> I[Email Alert]
     E --> F[External STT / LLM API]
 ```
 
@@ -29,6 +36,7 @@ flowchart LR
 - Core API는 인증, 업로드 제어, 상태 관리, 조회를 담당한다
 - AI Processing Service는 전사, 요약, 결정사항, To-Do 추출을 담당한다
 - 원본 파일은 Object Storage에 저장하고 정형 데이터는 PostgreSQL에 저장한다
+- ECS 서비스 로그는 CloudWatch Logs로 수집하고 핵심 장애 지표는 Email로 알린다
 
 ## 운영 고려 항목
 - 외부 STT/LLM 제공자 확정

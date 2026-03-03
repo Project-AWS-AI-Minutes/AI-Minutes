@@ -39,6 +39,8 @@
 - Task Definition
 - CodeDeploy 연동
 - Blue/Green Target Group 연동
+- CloudWatch Logs 연동
+- FAILED 증가 모니터링 기준
 
 ---
 
@@ -82,6 +84,7 @@
 - Task Definition
 - CodeDeploy 연동
 - Retry Log 운영 기준
+- CloudWatch Logs 연동
 
 ---
 
@@ -125,6 +128,8 @@
 - Task Definition
 - CodeDeploy 연동
 - Blue/Green Target Group 연동
+- CloudWatch Logs 연동
+- ALB 5xx 알림 연동
 
 ---
 
