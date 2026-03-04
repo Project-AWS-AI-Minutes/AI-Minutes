@@ -2,15 +2,13 @@ import { createMockMeeting, startMockUpload } from '../api/meetingsApi.js';
 
 export function mountUploadZone(rootElement, options = {}) {
   const onComplete = options.onComplete || (() => {});
-  const workspace = options.workspace || { id: 'ws-mock', name: 'Mock Workspace' };
   const container = document.createElement('section');
   container.className = 'upload-zone';
   container.innerHTML = `
     <div class="upload-header">
-      <p class="eyebrow">Mock Upload Workspace</p>
-      <h3>회의 생성 후 업로드</h3>
-      <p class="muted">API와 DB 연결 전 단계이므로 현재 화면은 Presigned URL 업로드 UX를 목업으로 재현합니다.</p>
-      <p class="muted">현재 선택 워크스페이스: <strong>${workspace.name}</strong></p>
+      <p class="eyebrow">Upload Meeting</p>
+      <h3>m4a 파일 업로드</h3>
+      <p class="muted">Presigned URL 기반 업로드 흐름을 목업으로 재현합니다. 업로드 후 회의 상세 화면에서 처리 상태를 확인할 수 있습니다.</p>
     </div>
     <div class="upload-form">
       <label class="field">
@@ -29,7 +27,6 @@ export function mountUploadZone(rootElement, options = {}) {
     <div class="upload-drop">
       <p><strong>Drag & Drop</strong> 또는 파일 선택</p>
       <p class="muted">지원 포맷: m4a / 최대 30MB / S3 Presigned URL 업로드 흐름</p>
-      <p class="muted">${workspace.type === 'PERSONAL' ? '개인 음성 업로드' : '워크스페이스 회의 업로드'} 기준으로 저장됩니다.</p>
       <input type="file" id="file-input" accept=".m4a,audio/mp4" hidden />
       <div class="upload-actions">
         <button class="btn" id="select-file-btn" type="button">파일 선택</button>
@@ -108,9 +105,7 @@ export function mountUploadZone(rootElement, options = {}) {
         title: titleInput.value,
         date: new Date(dateInput.value).toISOString(),
         participants: participantsInput.value,
-        fileName: selectedFile.name,
-        workspaceId: workspace.id,
-        workspaceName: workspace.name
+        fileName: selectedFile.name
       });
 
       updateProgress(35, 'Presigned URL 발급', '업로드 경로를 준비하고 있습니다.');

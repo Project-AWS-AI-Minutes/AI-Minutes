@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>MeetUs - Meetings</title>
+    <title>MeetUs - Archive</title>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
@@ -16,36 +16,24 @@
           <h1>MeetUs</h1>
           <p>AI Meeting Summary &amp; To-Do Archive Platform</p>
         </div>
-
         <nav class="nav-group">
           <a class="nav-item" href="./dashboard.html">Dashboard</a>
           <a class="nav-item" href="./upload.html">Upload Meeting</a>
-          <a class="nav-item active" href="./index.html">Meetings</a>
-          <a class="nav-item" href="./archive.html">Archive</a>
+          <a class="nav-item" href="./index.html">Meetings</a>
+          <a class="nav-item active" href="./archive.html">Archive</a>
         </nav>
-
         <div class="sidebar-card">
-          <h3>Core Scope</h3>
-          <ul>
-            <li>Upload meeting audio</li>
-            <li>Display transcription</li>
-            <li>Show AI summary</li>
-            <li>Extract Action Items</li>
-            <li>Archive and search meetings</li>
-          </ul>
+          <h3>Archive View</h3>
+          <p>완료되었거나 실패한 회의를 중심으로 검색, 날짜 필터, 최신순 정렬을 제공합니다.</p>
         </div>
       </aside>
 
       <section class="content-shell">
         <header class="topbar">
           <div class="page-title">
-            <p class="eyebrow">Meetings</p>
-            <h2>Meeting List</h2>
-            <p>최근 업로드된 회의와 처리 상태를 확인하고 상세 결과로 이동합니다.</p>
-          </div>
-          <div class="topbar-actions">
-            <a class="btn" href="./upload.html">새 회의 업로드</a>
-            <button id="reload-btn" class="btn btn-primary" type="button">새로고침</button>
+            <p class="eyebrow">Archive</p>
+            <h2>Meeting Archive</h2>
+            <p>처리 완료된 회의를 보관하고 빠르게 다시 찾을 수 있습니다.</p>
           </div>
         </header>
 
@@ -60,32 +48,20 @@
               <input id="date-filter" type="date" />
             </div>
             <div class="field">
-              <label for="status-filter">Processing status</label>
-              <select id="status-filter">
-                <option value="ALL">ALL</option>
-                <option value="UPLOADED">UPLOADED</option>
-                <option value="TRANSCRIBING">TRANSCRIBING</option>
-                <option value="SUMMARIZING">SUMMARIZING</option>
-                <option value="COMPLETED">COMPLETED</option>
-                <option value="FAILED">FAILED</option>
-              </select>
-            </div>
-            <div class="field">
-              <label for="sort-filter">Sort</label>
+              <label for="sort-filter">Sort by latest</label>
               <select id="sort-filter">
                 <option value="date-desc">Latest first</option>
                 <option value="date-asc">Oldest first</option>
-                <option value="status">Status</option>
               </select>
             </div>
           </div>
         </section>
 
-        <section id="meeting-list" class="meeting-list"></section>
-        <p id="empty-state" class="empty-state hidden">조건에 맞는 회의가 없습니다.</p>
+        <section id="archive-list" class="meeting-list"></section>
+        <p id="empty-state" class="empty-state hidden">Archive에 표시할 회의가 없습니다.</p>
       </section>
     </main>
 
-    <script type="module" src="./pages/meetingsPage.js"></script>
+    <script type="module" src="./pages/archivePage.js"></script>
   </body>
 </html>

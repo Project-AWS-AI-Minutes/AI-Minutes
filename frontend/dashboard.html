@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>MeetUs - Dashboard</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="./assets/styles.css" />
+  </head>
+  <body>
+    <main class="app-shell">
+      <aside class="sidebar">
+        <div class="brand-block">
+          <h1>MeetUs</h1>
+          <p>AI Meeting Summary &amp; To-Do Archive Platform</p>
+        </div>
+        <nav class="nav-group">
+          <a class="nav-item active" href="./dashboard.html">Dashboard</a>
+          <a class="nav-item" href="./upload.html">Upload Meeting</a>
+          <a class="nav-item" href="./index.html">Meetings</a>
+          <a class="nav-item" href="./archive.html">Archive</a>
+        </nav>
+        <div class="sidebar-card">
+          <h3>Prototype Notes</h3>
+          <p>복잡한 협업 기능 없이 핵심 업로드, 요약, To-Do, 아카이브 흐름만 포함합니다.</p>
+        </div>
+      </aside>
+
+      <section class="content-shell">
+        <header class="topbar">
+          <div class="page-title">
+            <p class="eyebrow">Dashboard</p>
+            <h2>Overview</h2>
+            <p>현재 처리 현황과 최근 완료된 회의를 한눈에 확인합니다.</p>
+          </div>
+          <div class="topbar-actions">
+            <a class="btn btn-primary" href="./upload.html">Upload Meeting</a>
+          </div>
+        </header>
+
+        <section id="metrics-grid" class="metrics-grid"></section>
+
+        <section class="grid-two">
+          <article class="card">
+            <div class="card-head">
+              <div>
+                <p class="eyebrow">Recent Meetings</p>
+                <h3>Latest Activity</h3>
+              </div>
+            </div>
+            <div id="recent-meetings" class="meeting-list"></div>
+          </article>
+
+          <article class="card">
+            <div class="card-head">
+              <div>
+                <p class="eyebrow">Completed Summary</p>
+                <h3>Latest Summary</h3>
+              </div>
+            </div>
+            <div id="latest-summary" class="summary-box"></div>
+          </article>
+        </section>
+      </section>
+    </main>
+
+    <script type="module" src="./pages/dashboardOverview.js"></script>
+  </body>
+</html>

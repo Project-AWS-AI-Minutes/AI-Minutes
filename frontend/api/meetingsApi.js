@@ -55,21 +55,28 @@ function resolveMockStatus(meeting) {
 
   if (uploadedAt && now >= uploadedAt) {
     nextMeeting.status = 'UPLOADED';
+    nextMeeting.displayStatus = 'UPLOADED';
     nextMeeting.summary = '업로드가 완료되었습니다. 곧 AI 분석이 시작됩니다.';
   }
 
   if (processingAt && now >= processingAt) {
     nextMeeting.status = 'PROCESSING';
-    nextMeeting.summary = '회의 내용을 분석 중입니다. 완료되면 결과가 자동으로 갱신됩니다.';
+    nextMeeting.displayStatus = now < completedAt - 2200 ? 'TRANSCRIBING' : 'SUMMARIZING';
+    nextMeeting.summary =
+      nextMeeting.displayStatus === 'TRANSCRIBING'
+        ? '회의 음성을 전사하는 중입니다.'
+        : '전사가 완료되어 요약과 Action Items를 생성 중입니다.';
   }
 
   if (completedAt && now >= completedAt) {
     if (shouldFail) {
       nextMeeting.status = 'FAILED';
+      nextMeeting.displayStatus = 'FAILED';
       nextMeeting.summary = 'AI 처리 중 오류가 발생했습니다. 다시 시도해주세요.';
       nextMeeting.failureReason = 'Mock 처리 중 오류가 발생했습니다.';
     } else {
       nextMeeting.status = 'COMPLETED';
+      nextMeeting.displayStatus = 'COMPLETED';
       nextMeeting.failureReason = '';
       Object.assign(nextMeeting, buildCompletedResult(nextMeeting.title, nextMeeting.participants));
     }
@@ -104,17 +111,18 @@ export async function getMeetings(filters = {}) {
   const query = (filters.query || '').trim().toLowerCase();
   const status = filters.status || 'ALL';
   const sort = filters.sort || 'date-desc';
-  const workspaceId = filters.workspaceId || '';
+  const fromDate = filters.fromDate || '';
 
   const filtered = meetings.filter((meeting) => {
     const matchesQuery =
       !query ||
       meeting.title.toLowerCase().includes(query) ||
       meeting.participants.some((participant) => participant.toLowerCase().includes(query));
-    const matchesStatus = status === 'ALL' || meeting.status === status;
-    const matchesWorkspace = !workspaceId || meeting.workspace_id === workspaceId;
+    const currentStatus = meeting.displayStatus || meeting.status;
+    const matchesStatus = status === 'ALL' || currentStatus === status;
+    const matchesFromDate = !fromDate || meeting.date.slice(0, 10) >= fromDate;
 
-    return matchesQuery && matchesStatus && matchesWorkspace;
+    return matchesQuery && matchesStatus && matchesFromDate;
   });
 
   return simulateDelay(sortMeetings(filtered, sort));
@@ -128,7 +136,7 @@ export async function getMeetingById(id) {
   return simulateDelay(meeting);
 }
 
-export async function createMockMeeting({ title, date, participants, fileName, workspaceId, workspaceName }) {
+export async function createMockMeeting({ title, date, participants, fileName }) {
   const meetings = reconcileMeetings();
   const id = `mtg-${Date.now()}`;
   const createdAt = new Date().toISOString();
@@ -142,12 +150,11 @@ export async function createMockMeeting({ title, date, participants, fileName, w
     title: title.trim(),
     date,
     createdAt,
-    status: 'CREATED',
+    status: 'UPLOADED',
+    displayStatus: 'UPLOADED',
     participants: participantList.length ? participantList : ['미지정'],
-    workspaceId: workspaceId || 'ws-mock',
-    workspace: workspaceName || 'Mock Workspace',
     sourceFileName: fileName,
-    summary: '회의가 생성되었습니다. 오디오 파일을 업로드해주세요.',
+    summary: '업로드가 완료되었고 AI 분석을 준비 중입니다.',
     decisions: [],
     transcript: '',
     todos: [],
@@ -192,6 +199,7 @@ export async function retryMeetingProcessing(id) {
     return {
       ...meeting,
       status: 'PROCESSING',
+      displayStatus: 'TRANSCRIBING',
       failureReason: '',
       summary: '재처리를 시작했습니다. 결과를 다시 생성하고 있습니다.',
       mockFlow: {
@@ -228,6 +236,33 @@ export function getStatusMeta(status) {
     FAILED: {
       label: '처리 실패',
       description: '재처리 또는 원인 확인이 필요한 상태입니다.'
+    }
+  };
+
+  return map[status] || { label: status, description: '' };
+}
+
+export function getDisplayStatusMeta(status) {
+  const map = {
+    UPLOADED: {
+      label: 'UPLOADED',
+      description: '오디오 업로드가 완료되었습니다.'
+    },
+    TRANSCRIBING: {
+      label: 'TRANSCRIBING',
+      description: '음성을 텍스트로 변환하고 있습니다.'
+    },
+    SUMMARIZING: {
+      label: 'SUMMARIZING',
+      description: 'AI Summary와 Action Items를 생성하고 있습니다.'
+    },
+    COMPLETED: {
+      label: 'COMPLETED',
+      description: '요약과 To-Do가 준비되었습니다.'
+    },
+    FAILED: {
+      label: 'FAILED',
+      description: '처리 중 오류가 발생했습니다.'
     }
   };
 

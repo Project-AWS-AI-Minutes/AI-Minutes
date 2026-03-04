@@ -1,115 +1,113 @@
-import { getMeetingById, getStatusMeta, retryMeetingProcessing } from '../api/meetingsApi.js';
-import { logoutMock, requireSession } from '../api/sessionApi.js';
-import { getCurrentWorkspace, requireWorkspace } from '../api/workspaceApi.js';
-import { createTodoCard } from '../components/todoCard.js';
+import { getDisplayStatusMeta, getMeetingById, retryMeetingProcessing } from '../api/meetingsApi.js';
 import { formatDateTime } from '../utils/format.js';
-import { initMobileSidebar } from '../utils/mobileSidebar.js';
-import { initWorkspaceModal, updateHeaderUserInfo, initGlobalSearch } from '../utils/common.js';
 
 const titleEl = document.getElementById('meeting-title');
 const metaEl = document.getElementById('meeting-meta');
-const summaryEl = document.getElementById('summary-content');
-const todoRootEl = document.getElementById('todo-root');
-const decisionListEl = document.getElementById('decision-list');
-const transcriptEl = document.getElementById('transcript-content');
-const sourceFileEl = document.getElementById('source-file');
-const workspaceNameEl = document.getElementById('workspace-name');
-const failureReasonEl = document.getElementById('failure-reason');
 const statusLabelEl = document.getElementById('status-label');
 const statusDescriptionEl = document.getElementById('status-description');
 const statusBannerEl = document.getElementById('status-banner');
-const refreshBtn = document.getElementById('refresh-btn');
 const retryBtn = document.getElementById('retry-btn');
-const logoutBtn = document.getElementById('logout-btn');
+const refreshBtn = document.getElementById('refresh-btn');
+const summaryEl = document.getElementById('summary-content');
+const transcriptEl = document.getElementById('transcript-content');
+const todoRootEl = document.getElementById('todo-root');
+const toggleTranscriptBtn = document.getElementById('toggle-transcript-btn');
+const copySummaryBtn = document.getElementById('copy-summary-btn');
+const downloadSummaryBtn = document.getElementById('download-summary-btn');
 
-let pollingTimer = null;
 let meetingId = '';
+let transcriptCollapsed = false;
+let pollingTimer = null;
 
-const session = requireSession();
-const currentWorkspace = requireWorkspace();
-
-// 헤더에서 사용자 이름 업데이트
-const headerUserNameEl = document.querySelector('.header-user span');
-if (headerUserNameEl && session.user) {
-  headerUserNameEl.textContent = session.user.name;
+function groupTodosByPerson(todos = []) {
+  return todos.reduce((acc, todo) => {
+    const key = todo.assignee || 'Unassigned';
+    acc[key] = acc[key] || [];
+    acc[key].push(todo);
+    return acc;
+  }, {});
 }
-logoutBtn.addEventListener('click', logoutMock);
 
-function renderDecisions(decisions) {
-  decisionListEl.innerHTML = '';
+function renderTranscript(transcript = '') {
+  transcriptEl.innerHTML = '';
 
-  if (!decisions?.length) {
-    decisionListEl.innerHTML = '<li class="muted">결정사항이 아직 없습니다.</li>';
+  if (!transcript || transcriptCollapsed) {
+    transcriptEl.innerHTML = `<div class="empty-state">${transcriptCollapsed ? 'Transcript 섹션이 접혀 있습니다.' : 'Transcript가 아직 준비되지 않았습니다.'}</div>`;
     return;
   }
 
-  decisions.forEach((decision) => {
-    const item = document.createElement('li');
-    item.textContent = decision;
-    decisionListEl.appendChild(item);
+  transcript.split('\n').filter(Boolean).forEach((line) => {
+    const [speaker, ...rest] = line.split(':');
+    const item = document.createElement('article');
+    item.className = 'transcript-item';
+    item.innerHTML = `
+      <strong>${speaker || 'Speaker'}</strong>
+      <p>${rest.join(':').trim() || line}</p>
+    `;
+    transcriptEl.appendChild(item);
   });
 }
 
-function renderTodos(todos) {
+function renderTodos(todos = []) {
   todoRootEl.innerHTML = '';
 
-  if (!todos?.length) {
-    todoRootEl.innerHTML = '<p class="muted">추출된 To-Do가 없습니다.</p>';
+  if (!todos.length) {
+    todoRootEl.innerHTML = '<div class="empty-state">추출된 Action Items가 없습니다.</div>';
     return;
   }
 
-  todos.forEach((todo) => {
-    todoRootEl.appendChild(createTodoCard(todo));
+  const grouped = groupTodosByPerson(todos);
+  Object.entries(grouped).forEach(([person, items]) => {
+    const group = document.createElement('article');
+    group.className = 'todo-group-card';
+    const listHtml = items
+      .map(
+        (item) => `
+          <article class="todo-item">
+            <div class="todo-item-head">
+              <h4>${person}</h4>
+              <span class="badge stage-COMPLETED">Task</span>
+            </div>
+            <p>${item.task}</p>
+          </article>
+        `
+      )
+      .join('');
+
+    group.innerHTML = `
+      <h4>${person}</h4>
+      <div class="todo-list">${listHtml}</div>
+    `;
+    todoRootEl.appendChild(group);
   });
 }
 
-function renderStatus(meeting) {
-  const statusMeta = getStatusMeta(meeting.status);
+function updateStatus(meeting) {
+  const displayStatus = meeting.displayStatus || meeting.status;
+  const statusMeta = getDisplayStatusMeta(displayStatus);
   statusLabelEl.textContent = statusMeta.label;
   statusDescriptionEl.textContent = statusMeta.description || meeting.summary;
-  statusBannerEl.className = `status-banner status-${meeting.status}`;
-  retryBtn.classList.toggle('hidden', meeting.status !== 'FAILED');
+  statusBannerEl.className = `card stage-${displayStatus}`;
+  retryBtn.classList.toggle('hidden', displayStatus !== 'FAILED');
 }
 
 async function renderMeeting() {
-  if (!meetingId) return;
+  const meeting = await getMeetingById(meetingId);
+  const displayStatus = meeting.displayStatus || meeting.status;
 
-  try {
-    const meeting = await getMeetingById(meetingId);
+  titleEl.textContent = meeting.title;
+  metaEl.textContent = `${formatDateTime(meeting.date)} · ${displayStatus} · ${meeting.sourceFileName}`;
+  summaryEl.textContent = meeting.summary || '요약이 아직 준비되지 않았습니다.';
 
-    if (getCurrentWorkspace()?.id && meeting.workspaceId !== getCurrentWorkspace().id) {
-      titleEl.textContent = '접근 제한';
-      summaryEl.textContent = '현재 선택한 워크스페이스에 속한 회의만 조회할 수 있습니다.';
-      return;
-    }
+  updateStatus(meeting);
+  renderTranscript(meeting.transcript);
+  renderTodos(meeting.todos);
 
-    titleEl.textContent = meeting.title;
-    metaEl.textContent = `${formatDateTime(meeting.date)} · 상태: ${meeting.status}`;
-    summaryEl.textContent = meeting.summary || '요약이 아직 없습니다.';
-    transcriptEl.textContent = meeting.transcript || 'transcript가 아직 준비되지 않았습니다.';
-    sourceFileEl.textContent = meeting.sourceFileName || '업로드 전';
-    workspaceNameEl.textContent = meeting.workspace || 'Mock Workspace';
-    failureReasonEl.textContent = meeting.failureReason || '없음';
-
-    renderStatus(meeting);
-    renderDecisions(meeting.decisions);
-    renderTodos(meeting.todos);
-
-    if (meeting.status === 'PROCESSING' || meeting.status === 'UPLOADED' || meeting.status === 'CREATED') {
-      startPolling();
-    } else {
-      stopPolling();
-    }
-  } catch (error) {
+  if (['UPLOADED', 'TRANSCRIBING', 'SUMMARIZING'].includes(displayStatus)) {
+    startPolling();
+  } else {
     stopPolling();
-    titleEl.textContent = '로딩 실패';
-    summaryEl.textContent = error.message;
   }
-}
-
-function stopPolling() {
-  window.clearInterval(pollingTimer);
-  pollingTimer = null;
 }
 
 function startPolling() {
@@ -117,10 +115,38 @@ function startPolling() {
   pollingTimer = window.setInterval(renderMeeting, 2500);
 }
 
+function stopPolling() {
+  if (!pollingTimer) return;
+  window.clearInterval(pollingTimer);
+  pollingTimer = null;
+}
+
+toggleTranscriptBtn.addEventListener('click', async () => {
+  transcriptCollapsed = !transcriptCollapsed;
+  toggleTranscriptBtn.textContent = transcriptCollapsed ? '펼치기' : '접기';
+  await renderMeeting();
+});
+
+copySummaryBtn.addEventListener('click', async () => {
+  await navigator.clipboard.writeText(summaryEl.textContent || '');
+  copySummaryBtn.textContent = 'Copied';
+  window.setTimeout(() => {
+    copySummaryBtn.textContent = 'Copy Summary';
+  }, 1200);
+});
+
+downloadSummaryBtn.addEventListener('click', () => {
+  const blob = new Blob([summaryEl.textContent || ''], { type: 'text/plain;charset=utf-8' });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = `${meetingId}-summary.txt`;
+  link.click();
+  URL.revokeObjectURL(url);
+});
+
 retryBtn.addEventListener('click', async () => {
-  retryBtn.disabled = true;
   await retryMeetingProcessing(meetingId);
-  retryBtn.disabled = false;
   await renderMeeting();
 });
 
@@ -131,18 +157,12 @@ async function init() {
   meetingId = params.get('id') || '';
 
   if (!meetingId) {
-    titleEl.textContent = '잘못된 접근';
-    summaryEl.textContent = '회의 ID가 없습니다.';
+    titleEl.textContent = 'Meeting not found';
+    metaEl.textContent = '유효한 회의 ID가 없습니다.';
     return;
   }
 
   await renderMeeting();
 }
-
-// 새로운 기능들 초기화
-initMobileSidebar();
-initWorkspaceModal();
-updateHeaderUserInfo();
-initGlobalSearch();
 
 init();
