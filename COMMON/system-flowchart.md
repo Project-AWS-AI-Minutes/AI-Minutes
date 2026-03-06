@@ -21,15 +21,14 @@ flowchart LR
         API[Core API Service<br/>ECS Fargate];
         Q[SQS Queue];
         AI[AI Processing Service<br/>ECS Fargate];
+        TRANS[AWS Transcribe];
+        BEDROCK["Amazon Bedrock Claude 3 API"];
 
         S3[(S3 Audio Storage)];
         RDS[(RDS Database)];
         CW[CloudWatch Logs and Alarms];
-        NAT[NAT Gateway];
     end
 
-    TRANS[AWS Transcribe];
-    BEDROCK[Amazon Bedrock (Claude 3) API];
     EMAIL[Email Alert];
     GHA[GitHub Actions];
     ECR[Amazon ECR];
@@ -55,8 +54,7 @@ flowchart LR
     AI -->|오디오 조회| S3;
     AI -->|STT 요청| TRANS;
     TRANS -->|Transcript 반환| AI;
-    AI --> NAT;
-    NAT -->|요약 및 To-Do 요청| BEDROCK;
+    AI -->|요약 및 To-Do 요청| BEDROCK;
     BEDROCK -->|결과 반환| AI;
     AI -->|결과 저장| RDS;
 

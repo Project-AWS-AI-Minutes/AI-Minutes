@@ -16,7 +16,6 @@ subgraph VPC
 subgraph Public_Subnet
 ALB[Application Load Balancer]
 LISTENER[ALB Production Listener]
-NAT[NAT Gateway]
 end
 
 subgraph Private_Subnet
@@ -34,9 +33,11 @@ TG_BLUE[Blue Target Group]
 TG_GREEN[Green Target Group]
 end
 
+subgraph AWS_Managed_Services
 S3[(Amazon S3)]
 TRANS[AWS Transcribe]
-BEDROCK[Amazon Bedrock (Claude 3) API]
+BEDROCK["Amazon Bedrock Claude 3 API"]
+end
 
 end
 
@@ -86,10 +87,3 @@ ECR --> CD
 CD --> FE_GREEN
 CD --> CORE_GREEN
 ECR --> AI
-
-%% =======================
-%% OUTBOUND INTERNET
-%% =======================
-
-AI --> NAT
-NAT --> BEDROCK

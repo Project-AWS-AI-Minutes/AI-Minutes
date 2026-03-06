@@ -166,14 +166,14 @@ Frontend 서비스를 ECS(Fargate), ALB, CodeDeploy 기반 Blue-Green 구조로 
 3. Frontend ECS와 Core API ECS는 Private Subnet에서 동작한다.
 4. Core API는 S3에 Presigned URL을 발급하고 SQS에 비동기 작업 메시지를 발행한다.
 5. AI Processing Service는 Private Subnet에서 SQS 메시지를 소비한다.
-6. AI Processing Service는 외부 API 호출을 위해 NAT 또는 AWS 관리형 outbound 경로를 사용해 AWS Transcribe 및 Amazon Bedrock (Claude 3)에 접근한다.
+6. AI Processing Service는 AWS 내부 네트워크에서 AWS Transcribe 및 Amazon Bedrock (Claude 3)에 접근한다.
 7. RDS는 Private Subnet에 배치되어 ECS 서비스에서만 접근 가능하다.
 
-### 5.3 외부 API 호출 구조
+### 5.3 AI 호출 구조
 - AI Processing Service → AWS Transcribe
 - AI Processing Service → Amazon Bedrock (Claude 3) API
-- 외부 API 호출은 Frontend가 아니라 백엔드 워커에서만 수행한다.
-- 외부 API 인증 키는 환경 변수 또는 Secret 관리 서비스로 주입한다.
+- AI 호출은 Frontend가 아니라 백엔드 워커에서만 수행한다.
+- 인증/모델 설정값은 환경 변수 또는 Secret 관리 서비스로 주입한다.
 
 ### 5.4 보안 정책
 #### Security Group 정책
