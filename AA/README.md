@@ -38,6 +38,8 @@ ECS Frontend Service 배포 + ALB 연결
 ## ECR push
 <img src="/AA/img/ECR_push.png">
 
+## 타켓그룹 생성
+<img src="/AA/img/targetgroup.png">
 
 
 # AA 작업 증적 (Frontend/Integration/Infra)
