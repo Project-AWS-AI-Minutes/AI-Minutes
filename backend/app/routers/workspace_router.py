@@ -17,6 +17,7 @@ router = APIRouter(prefix="/workspaces", tags=["workspaces"])
 
 class WorkspaceCreateRequest(BaseModel):
     name: str
+    description: str | None = None
 
 
 class WorkspaceInviteRequest(BaseModel):
@@ -51,6 +52,7 @@ def create_workspace(
     user = _require_user(db, user_id)
 
     workspace = Workspace(name=body.name.strip())
+    workspace.description = body.description.strip() if body.description else None
     workspace.owner_id = user.user_id
     db.add(workspace)
     db.flush()
@@ -66,7 +68,8 @@ def create_workspace(
 
     return {
         "workspace_id": str(workspace.workspace_id),
-        "name": workspace.name
+        "name": workspace.name,
+        "description": workspace.description
     }
 
 
@@ -90,6 +93,7 @@ def get_workspaces(
             {
                 "workspace_id": str(workspace.workspace_id),
                 "name": workspace.name,
+                "description": workspace.description,
                 "role": role
             }
             for workspace, role in rows
