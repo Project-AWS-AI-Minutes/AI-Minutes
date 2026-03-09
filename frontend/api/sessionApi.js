@@ -60,16 +60,16 @@ function decodeJwtPayload(token) {
 }
 
 export async function loginMock({ userId, password }) {
-  const email = userId?.trim();
-  if (!email || !password?.trim()) {
-    throw new Error('이메일과 비밀번호를 입력해주세요.');
+  const loginId = userId?.trim();
+  if (!loginId || !password?.trim()) {
+    throw new Error('로그인 ID와 비밀번호를 입력해주세요.');
   }
 
   let payload;
   try {
     payload = await request('/auth/login', {
       method: 'POST',
-      body: JSON.stringify({ email, password: password.trim() })
+      body: JSON.stringify({ login_id: loginId, password: password.trim() })
     });
   } catch (error) {
     if (error?.status === 404) {
@@ -86,9 +86,9 @@ export async function loginMock({ userId, password }) {
 
   const session = {
     user: {
-      userId: tokenClaims.user_id || tokenClaims.sub || email,
-      name: tokenClaims.name || email.split('@')[0],
-      email: tokenClaims.email || email
+      userId: tokenClaims.login_id || tokenClaims.user_id || tokenClaims.sub || loginId,
+      name: tokenClaims.name || tokenClaims.login_id || loginId,
+      email: tokenClaims.email || ''
     },
     accessToken,
     loggedInAt: new Date().toISOString()
@@ -99,7 +99,8 @@ export async function loginMock({ userId, password }) {
 }
 
 export async function signupMock({ userId, name, email, password }) {
-  if (!name?.trim() || !email?.trim() || !password?.trim()) {
+  const loginId = userId?.trim();
+  if (!loginId || !name?.trim() || !email?.trim() || !password?.trim()) {
     throw new Error('회원가입 정보를 모두 입력해주세요.');
   }
 
@@ -107,13 +108,14 @@ export async function signupMock({ userId, name, email, password }) {
     const account = await request('/auth/signup', {
       method: 'POST',
       body: JSON.stringify({
+        login_id: loginId,
         email: email.trim(),
         name: name.trim(),
         password: password.trim()
       })
     });
     return {
-      userId: account?.user_id || userId?.trim() || email.trim(),
+      userId: account?.login_id || loginId,
       name: name.trim(),
       email: email.trim(),
       password: password.trim()

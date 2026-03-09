@@ -7,6 +7,7 @@ ai_context/
 
 # [Python] 가상환경 및 캐시
 ai-pipeline/venv/
+ai-pipeline/.venv/
 __pycache__/
 *.py[cod]
 
@@ -81,6 +82,7 @@ crash.log
 
 # Backend Python
 backend/venv/
+backend/.venv/
 backend/__pycache__/
 backend/*.pyc
 

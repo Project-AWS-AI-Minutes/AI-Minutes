@@ -37,12 +37,12 @@
           <section id="login-section">
             <p class="eyebrow">Login</p>
             <h2>MeetUs 로그인</h2>
-            <p class="muted">이메일과 비밀번호를 입력하면 로그인할 수 있습니다.</p>
+            <p class="muted">로그인 ID와 비밀번호를 입력하면 로그인할 수 있습니다.</p>
 
             <form id="login-form" class="auth-form">
               <div class="field">
-                <label for="user-id-input">이메일</label>
-                <input id="user-id-input" type="email" placeholder="name@meetus.app" required />
+                <label for="user-id-input">로그인 ID</label>
+                <input id="user-id-input" type="text" placeholder="예: usr_001" required />
               </div>
               <div class="field">
                 <label for="password-input">비밀번호</label>
@@ -90,6 +90,7 @@
       </section>
     </main>
 
+    <script src="./runtime-config.js"></script>
     <script type="module" src="./pages/login.js"></script>
   </body>
 </html>
