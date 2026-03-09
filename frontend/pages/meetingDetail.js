@@ -9,7 +9,6 @@ const statusLabelEl = document.getElementById('status-label');
 const statusDescriptionEl = document.getElementById('status-description');
 const statusBannerEl = document.getElementById('status-banner');
 const retryBtn = document.getElementById('retry-btn');
-const refreshBtn = document.getElementById('refresh-btn');
 const summaryEl = document.getElementById('summary-content');
 const transcriptEl = document.getElementById('transcript-content');
 const todoRootEl = document.getElementById('todo-root');
@@ -195,8 +194,6 @@ retryBtn.addEventListener('click', async () => {
   await retryMeetingProcessing(meetingId);
   await renderMeeting();
 });
-
-refreshBtn.addEventListener('click', renderMeeting);
 
 async function init() {
   const params = new URLSearchParams(window.location.search);

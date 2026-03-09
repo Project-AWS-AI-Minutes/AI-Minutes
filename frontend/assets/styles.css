@@ -659,6 +659,41 @@ select {
   width: 100%;
 }
 
+@media (min-width: 1081px) {
+  .dashboard-page {
+    overflow: hidden;
+  }
+
+  .dashboard-page .app-shell {
+    height: 100vh;
+    overflow: hidden;
+  }
+
+  .dashboard-page .content-shell.dashboard-shell {
+    height: 100vh;
+    min-height: 100vh;
+    overflow: hidden;
+    grid-template-rows: auto auto minmax(0, 1fr);
+    align-content: stretch;
+  }
+
+  .dashboard-page .dashboard-lists-grid {
+    min-height: 0;
+  }
+
+  .dashboard-page .dashboard-scroll-card {
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+  }
+
+  .dashboard-page .dashboard-scroll-content {
+    min-height: 0;
+    overflow-y: auto;
+    padding-right: 4px;
+  }
+}
+
 .transcript-item,
 .todo-group-card,
 .todo-item {

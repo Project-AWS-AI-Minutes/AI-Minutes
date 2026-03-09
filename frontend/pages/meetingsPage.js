@@ -9,7 +9,6 @@ const searchInputEl = document.getElementById('search-input');
 const dateFilterEl = document.getElementById('date-filter');
 const statusFilterEl = document.getElementById('status-filter');
 const sortFilterEl = document.getElementById('sort-filter');
-const reloadBtn = document.getElementById('reload-btn');
 const paginationEl = document.getElementById('meeting-pagination');
 const currentWorkspaceEl = document.getElementById('current-workspace');
 const currentUserEl = document.getElementById('current-user');
@@ -103,7 +102,6 @@ searchInputEl.addEventListener('input', resetPageAndRender);
 dateFilterEl.addEventListener('change', resetPageAndRender);
 statusFilterEl.addEventListener('change', resetPageAndRender);
 sortFilterEl.addEventListener('change', resetPageAndRender);
-reloadBtn.addEventListener('click', renderMeetings);
 
 if (!window.localStorage.getItem('meetus-mock-meetings')) {
   resetMockMeetings();

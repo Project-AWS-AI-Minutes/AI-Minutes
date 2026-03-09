@@ -39,12 +39,14 @@ logoutBtn.addEventListener('click', logoutMock);
 function renderStats(meetings) {
   if (!statusStatsEl || !meetingCountEl) return;
   
-  const statuses = ['CREATED', 'UPLOADED', 'PROCESSING', 'COMPLETED', 'FAILED'];
+  const statuses = ['CREATED', 'UPLOADED', 'PROCESSING', 'COMPLETED'];
   statusStatsEl.innerHTML = '';
   meetingCountEl.textContent = `총 ${meetings.length}건`;
 
   statuses.forEach((status) => {
-    const count = meetings.filter((m) => m.status === status).length;
+    const count = status === 'CREATED'
+      ? meetings.length
+      : meetings.filter((m) => m.status === status).length;
     const item = document.createElement('div');
     item.className = `stat-card status-${status}`;
     item.innerHTML = `

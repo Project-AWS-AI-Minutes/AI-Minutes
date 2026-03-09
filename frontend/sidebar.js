@@ -35,9 +35,8 @@
     : hasSelectedWorkspace
     ? [
         { key: 'dashboard', label: '대시보드', href: './dashboard.html' },
-        { key: 'upload', label: '회의 업로드', href: './upload.html' },
         { key: 'meetings', label: '회의 목록', href: './index.html' },
-        { key: 'archive', label: '아카이브', href: './archive.html' }
+        { key: 'upload', label: '회의 업로드', href: './upload.html' }
       ]
     : [
         { key: 'workspaces', label: '워크스페이스', href: './workspaces.html' },
