@@ -3,6 +3,7 @@ import {
   createWorkspace,
   deleteWorkspace,
   getCurrentWorkspace,
+  getWorkspaceMembers,
   getVisibleWorkspaces,
   inviteUserToWorkspace,
   leaveWorkspace,
@@ -28,6 +29,7 @@ const params = new URLSearchParams(window.location.search);
 const PAGE_SIZE = 5;
 let currentPage = 1;
 let workspaceCache = [];
+let workspaceMembersMap = {};
 
 async function loadWorkspaces() {
   workspaceCache = await getVisibleWorkspaces();
@@ -89,6 +91,12 @@ function createWorkspaceCard(workspace) {
   const isCurrent = current?.workspaceId === workspace.workspaceId;
   const isOwner = workspace.role === 'OWNER';
   const roleLabel = isOwner ? 'OWNER' : 'MEMBER';
+  const members = workspaceMembersMap[workspace.workspaceId] || [];
+  const memberRows = members.length
+    ? members
+        .map((member) => `${member.name || member.loginId || member.email} (${member.role})`)
+        .join('<br />')
+    : '멤버 정보가 없습니다.';
   const card = document.createElement('article');
   card.className = 'card';
   card.innerHTML = `
@@ -101,6 +109,7 @@ function createWorkspaceCard(workspace) {
     </div>
     <p class="muted" style="margin: 0 0 14px;">${workspace.description || '워크스페이스 설명 정보가 없습니다.'}</p>
     <p class="muted" style="margin: 0 0 14px;">권한: ${roleLabel}</p>
+    <p class="muted" style="margin: 0 0 14px;"><strong>멤버 목록</strong><br />${memberRows}</p>
     <div class="meeting-card-foot">
       <span class="muted">ID: ${workspace.workspaceId}</span>
       <button class="btn ${isCurrent ? '' : 'btn-primary'}" type="button">${isCurrent ? '회의 보기' : '선택하기'}</button>
@@ -178,7 +187,19 @@ async function renderWorkspaces() {
     currentPage = totalPages;
   }
   const startIndex = (currentPage - 1) * PAGE_SIZE;
-  workspaces.slice(startIndex, startIndex + PAGE_SIZE).forEach((workspace) => workspaceListEl.appendChild(createWorkspaceCard(workspace)));
+  const visibleWorkspaces = workspaces.slice(startIndex, startIndex + PAGE_SIZE);
+  const membersEntries = await Promise.all(
+    visibleWorkspaces.map(async (workspace) => {
+      try {
+        const members = await getWorkspaceMembers(workspace.workspaceId);
+        return [workspace.workspaceId, members];
+      } catch {
+        return [workspace.workspaceId, []];
+      }
+    })
+  );
+  workspaceMembersMap = Object.fromEntries(membersEntries);
+  visibleWorkspaces.forEach((workspace) => workspaceListEl.appendChild(createWorkspaceCard(workspace)));
   createPagination(workspaces.length, currentPage, (page) => {
     currentPage = page;
     renderWorkspaces().catch((error) => {

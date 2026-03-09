@@ -39,6 +39,17 @@ function normalizeWorkspace(item = {}) {
   };
 }
 
+function normalizeWorkspaceMember(item = {}) {
+  return {
+    memberId: item.member_id || '',
+    userId: item.user_id || '',
+    loginId: item.login_id || '',
+    email: item.email || '',
+    name: item.name || '',
+    role: item.role || 'MEMBER'
+  };
+}
+
 export async function getVisibleWorkspaces() {
   const payload = await request('/workspaces', { headers: getHeaders() });
   const items = Array.isArray(payload?.workspaces) ? payload.workspaces : [];
@@ -73,6 +84,14 @@ export async function inviteUserToWorkspace(workspaceId, email) {
     headers: getHeaders({ 'Content-Type': 'application/json' }),
     body: JSON.stringify({ email: email.trim() })
   });
+}
+
+export async function getWorkspaceMembers(workspaceId) {
+  const payload = await request(`/workspaces/${encodeURIComponent(workspaceId)}/members`, {
+    headers: getHeaders()
+  });
+  const items = Array.isArray(payload?.members) ? payload.members : [];
+  return items.map(normalizeWorkspaceMember);
 }
 
 export async function deleteWorkspace(workspaceId) {
