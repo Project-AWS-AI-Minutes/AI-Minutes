@@ -226,7 +226,9 @@ workspaceFormEl.addEventListener('submit', async (event) => {
 });
 
 logoutBtn.addEventListener('click', logoutMock);
-openWorkspaceModalBtn.addEventListener('click', openWorkspaceModal);
+if (openWorkspaceModalBtn) {
+  openWorkspaceModalBtn.addEventListener('click', openWorkspaceModal);
+}
 closeWorkspaceModalBtn.addEventListener('click', closeWorkspaceModal);
 workspaceModalEl.addEventListener('click', (event) => {
   if (event.target === workspaceModalEl) {
