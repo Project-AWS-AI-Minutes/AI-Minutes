@@ -1,0 +1,50 @@
+{
+  "family": "ai-minutes-core-api-task",
+  "networkMode": "awsvpc",
+  "requiresCompatibilities": ["FARGATE"],
+  "cpu": "512",
+  "memory": "1024",
+  "executionRoleArn": "arn:aws:iam::692681389373:role/ecsTaskExecutionRole",
+  "taskRoleArn": "arn:aws:iam::692681389373:role/ai-minutes-core-api-task-role",
+  "containerDefinitions": [
+    {
+      "name": "core-api",
+      "image": "692681389373.dkr.ecr.ap-northeast-2.amazonaws.com/ai-minutes-core-api:latest",
+      "essential": true,
+      "portMappings": [
+        {
+          "containerPort": 8000,
+          "hostPort": 8000,
+          "protocol": "tcp"
+        }
+      ],
+      "environment": [
+        { "name": "postgresql://postgres:meetus321@meetus.ct0qca8oo22c.ap-northeast-2.rds.amazonaws.com:5432/meetus", "value": "postgresql://postgres:meetus321@meetus.ct0qca8oo22c.ap-northeast-2.rds.amazonaws.com:5432/meetus" },
+        { "name": "AWS_REGION", "value": "ap-northeast-2" },
+        { "name": "S3_BUCKET", "value": "meetus-audio-storage" },
+        { "name": "SQS_QUEUE_URL", "value": "https://sqs.ap-northeast-2.amazonaws.com/692681389373/meetus-process-queue" },
+        { "name": "JWT_SECRET", "value": "<JWT_SECRET>" },
+        { "name": "CORS_ALLOW_ORIGINS", "value": "http://localhost:8080,https://<FRONTEND_DOMAIN>" }
+      ],
+      "logConfiguration": {
+        "logDriver": "awslogs",
+        "options": {
+          "awslogs-group": "/ecs/ai-minutes-core-api",
+          "awslogs-region": "ap-northeast-2",
+          "awslogs-stream-prefix": "ecs"
+        }
+      },
+      "healthCheck": {
+        "command": [
+          "CMD-SHELL",
+          "python -c \"import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/docs')\" || exit 1"
+        ],
+        "interval": 30,
+        "timeout": 5,
+        "retries": 3,
+        "startPeriod": 20
+      }
+    }
+  ]
+}
+
