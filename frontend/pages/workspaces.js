@@ -17,11 +17,16 @@ const workspaceFormEl = document.getElementById('workspace-form');
 const workspaceNameInputEl = document.getElementById('workspace-name-input');
 const workspaceDescriptionInputEl = document.getElementById('workspace-description-input');
 const workspaceErrorEl = document.getElementById('workspace-error');
+const workspaceSearchForms = Array.from(document.querySelectorAll('.workspace-search-form'));
+const workspaceSearchInputs = Array.from(document.querySelectorAll('.workspace-search-input'));
 const logoutBtn = document.getElementById('logout-btn');
 const currentUserEl = document.getElementById('current-user');
 const workspaceModalEl = document.getElementById('workspace-modal');
+const workspaceDeleteModalEl = document.getElementById('workspace-delete-modal');
 const openWorkspaceModalBtn = document.getElementById('open-workspace-modal-btn');
 const closeWorkspaceModalBtn = document.getElementById('close-workspace-modal-btn');
+const cancelWorkspaceDeleteBtn = document.getElementById('cancel-workspace-delete-btn');
+const confirmWorkspaceDeleteBtn = document.getElementById('confirm-workspace-delete-btn');
 
 const session = requireSession();
 currentUserEl.textContent = `${session.user.userId} · ${session.user.email}`;
@@ -30,6 +35,8 @@ const PAGE_SIZE = 5;
 let currentPage = 1;
 let workspaceCache = [];
 let workspaceMembersMap = {};
+let pendingDeleteResolver = null;
+let workspaceSearchKeyword = '';
 
 async function loadWorkspaces() {
   workspaceCache = await getVisibleWorkspaces();
@@ -49,6 +56,25 @@ function closeWorkspaceModal() {
   if (params.get('modal') === 'create') {
     window.history.replaceState({}, '', './workspaces.html');
   }
+}
+
+function openWorkspaceDeleteModal() {
+  workspaceDeleteModalEl.classList.add('active');
+}
+
+function closeWorkspaceDeleteModal(result = false) {
+  workspaceDeleteModalEl.classList.remove('active');
+  if (pendingDeleteResolver) {
+    pendingDeleteResolver(result);
+    pendingDeleteResolver = null;
+  }
+}
+
+function confirmWorkspaceDelete() {
+  return new Promise((resolve) => {
+    pendingDeleteResolver = resolve;
+    openWorkspaceDeleteModal();
+  });
 }
 
 function createPagination(totalItems, page, onChange) {
@@ -86,9 +112,23 @@ function createPagination(totalItems, page, onChange) {
   workspacePaginationEl.appendChild(nextBtn);
 }
 
+function getFilteredWorkspaces() {
+  if (!workspaceSearchKeyword) {
+    return workspaceCache;
+  }
+  const keyword = workspaceSearchKeyword.toLowerCase();
+  return workspaceCache.filter((workspace) => workspace.name.toLowerCase().includes(keyword));
+}
+
+function syncSearchInputs(value) {
+  workspaceSearchInputs.forEach((input) => {
+    if (input.value !== value) {
+      input.value = value;
+    }
+  });
+}
+
 function createWorkspaceCard(workspace) {
-  const current = getCurrentWorkspace();
-  const isCurrent = current?.workspaceId === workspace.workspaceId;
   const isOwner = workspace.role === 'OWNER';
   const roleLabel = isOwner ? 'OWNER' : 'MEMBER';
   const members = workspaceMembersMap[workspace.workspaceId] || [];
@@ -100,7 +140,7 @@ function createWorkspaceCard(workspace) {
   const card = document.createElement('article');
   card.className = 'card';
   card.innerHTML = `
-    <div class="meeting-card-head">
+    <div class="meeting-card-head workspace-card-head">
       <div>
         <p class="eyebrow">${roleLabel}</p>
         <h3>${workspace.name}</h3>
@@ -108,7 +148,6 @@ function createWorkspaceCard(workspace) {
       <button class="btn btn-primary" type="button" data-select>선택하기</button>
     </div>
     <p class="muted" style="margin: 0 0 14px;">${workspace.description || '워크스페이스 설명 정보가 없습니다.'}</p>
-    <p class="muted" style="margin: 0 0 14px;">권한: ${roleLabel}</p>
     ${isOwner ? `
       <div class="auth-form" style="margin-top: 16px;">
         <div class="field">
@@ -119,17 +158,8 @@ function createWorkspaceCard(workspace) {
       </div>
     ` : ''}
     <div class="workspace-actions">
-      ${isOwner ? '<button class="auth-switch-link workspace-text-button" type="button" data-delete>워크스페이스 삭제</button>' : '<button class="btn" type="button" data-leave>워크스페이스 나가기</button>'}
+      ${isOwner ? '<button class="auth-switch-link workspace-text-button" type="button" data-delete>워크스페이스 삭제</button>' : '<button class="btn workspace-leave-btn" type="button" data-leave>워크스페이스 나가기</button>'}
     </div>
-    ${isOwner ? `
-      <div class="workspace-delete-confirm hidden" data-delete-confirm>
-        <p class="muted">정말 삭제하시겠습니까? 워크스페이스와 회의 데이터가 함께 삭제됩니다.</p>
-        <div class="workspace-primary-actions">
-          <button class="btn" type="button" data-delete-cancel>취소</button>
-          <button class="btn btn-danger" type="button" data-delete-confirm-btn>삭제</button>
-        </div>
-      </div>
-    ` : ''}
   `;
 
   const selectBtn = card.querySelector('[data-select]');
@@ -142,9 +172,6 @@ function createWorkspaceCard(workspace) {
     const inviteBtn = card.querySelector(`[data-invite="${workspace.workspaceId}"]`);
     const inviteInput = card.querySelector(`#invite-${workspace.workspaceId}`);
     const deleteBtn = card.querySelector('[data-delete]');
-    const deleteConfirmBox = card.querySelector('[data-delete-confirm]');
-    const deleteCancelBtn = card.querySelector('[data-delete-cancel]');
-    const deleteConfirmBtn = card.querySelector('[data-delete-confirm-btn]');
 
     inviteBtn.addEventListener('click', async () => {
       try {
@@ -156,13 +183,11 @@ function createWorkspaceCard(workspace) {
         workspaceErrorEl.textContent = error.message;
       }
     });
-    deleteBtn.addEventListener('click', () => {
-      deleteConfirmBox.classList.remove('hidden');
-    });
-    deleteCancelBtn.addEventListener('click', () => {
-      deleteConfirmBox.classList.add('hidden');
-    });
-    deleteConfirmBtn.addEventListener('click', async () => {
+    deleteBtn.addEventListener('click', async () => {
+      const confirmed = await confirmWorkspaceDelete();
+      if (!confirmed) {
+        return;
+      }
       try {
         await deleteWorkspace(workspace.workspaceId);
         await loadWorkspaces();
@@ -191,9 +216,15 @@ function createWorkspaceCard(workspace) {
 }
 
 async function renderWorkspaces() {
-  const workspaces = workspaceCache;
+  const workspaces = getFilteredWorkspaces();
   workspaceCountEl.textContent = `${workspaces.length}개 워크스페이스`;
   workspaceListEl.innerHTML = '';
+  if (workspaces.length === 0) {
+    workspaceListEl.innerHTML = '<div class="empty-state">검색 결과가 없습니다.</div>';
+    workspacePaginationEl.innerHTML = '';
+    workspacePaginationEl.classList.add('hidden');
+    return;
+  }
   const totalPages = Math.max(1, Math.ceil(workspaces.length / PAGE_SIZE));
   if (currentPage > totalPages) {
     currentPage = totalPages;
@@ -237,6 +268,21 @@ workspaceFormEl.addEventListener('submit', async (event) => {
   }
 });
 
+workspaceSearchForms.forEach((form) => {
+  form.addEventListener('submit', (event) => {
+    event.preventDefault();
+  });
+});
+
+workspaceSearchInputs.forEach((input) => {
+  input.addEventListener('input', async () => {
+    workspaceSearchKeyword = input.value.trim();
+    syncSearchInputs(workspaceSearchKeyword);
+    currentPage = 1;
+    await renderWorkspaces();
+  });
+});
+
 logoutBtn.addEventListener('click', logoutMock);
 if (openWorkspaceModalBtn) {
   openWorkspaceModalBtn.addEventListener('click', openWorkspaceModal);
@@ -245,6 +291,13 @@ closeWorkspaceModalBtn.addEventListener('click', closeWorkspaceModal);
 workspaceModalEl.addEventListener('click', (event) => {
   if (event.target === workspaceModalEl) {
     closeWorkspaceModal();
+  }
+});
+cancelWorkspaceDeleteBtn.addEventListener('click', () => closeWorkspaceDeleteModal(false));
+confirmWorkspaceDeleteBtn.addEventListener('click', () => closeWorkspaceDeleteModal(true));
+workspaceDeleteModalEl.addEventListener('click', (event) => {
+  if (event.target === workspaceDeleteModalEl) {
+    closeWorkspaceDeleteModal(false);
   }
 });
 

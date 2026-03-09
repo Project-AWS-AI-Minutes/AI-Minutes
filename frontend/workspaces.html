@@ -40,13 +40,27 @@
         </header>
 
         <section class="workspace-grid">
-          <div>
+          <div class="workspace-main-column">
+            <article class="card workspace-mobile-search-card">
+              <form class="workspace-search-form auth-form">
+                <div class="field">
+                  <div class="input-with-icon">
+                    <span class="input-icon" aria-hidden="true">
+                      <svg viewBox="0 0 24 24" focusable="false" aria-hidden="true">
+                        <path d="M10 4a6 6 0 1 1 0 12a6 6 0 0 1 0-12m0-2a8 8 0 1 0 4.9 14.3l5.4 5.4l1.4-1.4l-5.4-5.4A8 8 0 0 0 10 2z" />
+                      </svg>
+                    </span>
+                    <input class="workspace-search-input" type="text" placeholder="워크스페이스 이름 입력" />
+                  </div>
+                </div>
+              </form>
+            </article>
             <section id="workspace-list" class="workspace-list"></section>
             <div id="workspace-pagination" class="pagination hidden"></div>
           </div>
 
           <aside class="workspace-side-stack">
-            <article class="card">
+            <article class="card workspace-sticky-card">
               <div class="card-head">
                 <div>
                 <p class="eyebrow">Personal Archive</p>
@@ -54,21 +68,18 @@
                 </div>
               </div>
               <p class="muted">개인 워크스페이스를 선택하면 개인 음성 메모, 인터뷰, 회의 기록도 같은 업로드 흐름으로 관리할 수 있습니다.</p>
-            </article>
-
-            <article class="card">
-              <div class="card-head">
-                <div>
-                <p class="eyebrow">Core Actions</p>
-                <h3>사용 가능 기능</h3>
+              <form class="workspace-search-form auth-form">
+                <div class="field">
+                  <div class="input-with-icon">
+                    <span class="input-icon" aria-hidden="true">
+                      <svg viewBox="0 0 24 24" focusable="false" aria-hidden="true">
+                        <path d="M10 4a6 6 0 1 1 0 12a6 6 0 0 1 0-12m0-2a8 8 0 1 0 4.9 14.3l5.4 5.4l1.4-1.4l-5.4-5.4A8 8 0 0 0 10 2z" />
+                      </svg>
+                    </span>
+                    <input class="workspace-search-input" type="text" placeholder="워크스페이스 이름 입력" />
+                  </div>
                 </div>
-              </div>
-              <ul class="muted" style="margin: 0; padding-left: 18px; line-height: 1.8;">
-                <li>회의 업로드</li>
-                <li>AI Summary 확인</li>
-                <li>Action Items 조회</li>
-                <li>Archive 검색 및 재조회</li>
-              </ul>
+              </form>
             </article>
           </aside>
         </section>
@@ -95,6 +106,18 @@
             <button class="btn btn-primary" type="submit">생성</button>
           </div>
         </form>
+      </div>
+    </div>
+
+    <div id="workspace-delete-modal" class="modal-overlay">
+      <div class="modal-panel">
+        <p class="eyebrow">Delete Workspace</p>
+        <h2 style="margin: 0;">워크스페이스 삭제</h2>
+        <p class="muted" style="margin: 8px 0 0;">정말 삭제하시겠습니까?<br />워크스페이스와 회의 데이터가 함께 삭제됩니다.</p>
+        <div class="modal-actions">
+          <button id="cancel-workspace-delete-btn" class="btn" type="button">취소</button>
+          <button id="confirm-workspace-delete-btn" class="btn btn-primary" type="button">확인</button>
+        </div>
       </div>
     </div>
 

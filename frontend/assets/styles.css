@@ -394,6 +394,32 @@ select {
   transition: border-color var(--transition), background-color var(--transition);
 }
 
+.input-with-icon {
+  position: relative;
+}
+
+.input-with-icon .input-icon {
+  position: absolute;
+  left: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--text-strong);
+  font-size: 14px;
+  line-height: 1;
+  pointer-events: none;
+}
+
+.input-with-icon .input-icon svg {
+  display: block;
+  width: 16px;
+  height: 16px;
+  fill: currentColor;
+}
+
+.input-with-icon input {
+  padding-left: 34px;
+}
+
 .field input:focus,
 .field select:focus {
   border-color: var(--accent);
@@ -416,6 +442,7 @@ select {
   justify-content: center;
   flex-wrap: wrap;
   gap: var(--space-2);
+  margin-top: var(--space-5);
 }
 
 .meeting-card-meta {
@@ -516,8 +543,7 @@ select {
 .progress-meta,
 .inline-actions,
 .summary-actions,
-.workspace-actions,
-.workspace-primary-actions {
+.workspace-actions {
   display: flex;
   gap: var(--space-2);
   align-items: center;
@@ -570,27 +596,67 @@ select {
   grid-template-columns: minmax(0, 1fr) 320px;
 }
 
-.workspace-primary-actions {
-  justify-content: flex-end;
+.workspace-sticky-card {
+  position: sticky;
+  top: var(--space-6);
+  align-self: start;
+  height: fit-content;
 }
 
-.workspace-delete-confirm {
-  margin-top: var(--space-2);
-  padding: var(--space-3);
-  border: 1px solid var(--line);
-  border-radius: var(--radius-sm);
-  background: var(--surface-strong);
+.workspace-mobile-search-card {
+  display: none;
 }
 
-.workspace-delete-confirm p {
-  margin: 0 0 var(--space-2);
+.auth-form.workspace-search-form {
+  display: flex;
+  align-items: end;
+  gap: var(--space-2);
+  margin-top: var(--space-3);
+}
+
+.auth-form.workspace-search-form .field {
+  flex: 1 1 auto;
+  margin: 0;
+}
+
+.auth-form.workspace-search-form .input-with-icon {
+  width: 100%;
+}
+
+.auth-form.workspace-search-form .workspace-search-input {
+  width: 100%;
+}
+
+.auth-form.workspace-search-form .btn {
+  flex: 0 0 auto;
+  width: 60px;
+  min-width: 60px;
+  min-height: 45px;
+  height: 45px;
+  padding: 0 10px;
 }
 
 .workspace-text-button {
   margin-top: 0;
-  width: auto;
-  display: inline-block;
+  width: fit-content;
+  display: inline-flex;
   text-align: left;
+  min-height: auto;
+  padding: 0;
+}
+
+.workspace-actions .auth-switch-link.workspace-text-button {
+  width: fit-content;
+  display: inline-flex;
+  padding: 0;
+  min-height: auto;
+  text-align: center;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.workspace-actions .workspace-leave-btn {
+  width: 100%;
 }
 
 .transcript-item,
@@ -855,6 +921,21 @@ select {
     grid-template-columns: 1fr;
   }
 
+  .workspace-side-stack {
+    display: none;
+  }
+
+  .workspace-mobile-search-card {
+    display: block;
+    border: 0;
+    padding: 0;
+  }
+
+  .workspace-main-column {
+    display: grid;
+    gap: var(--space-4);
+  }
+
   .auth-panel {
     display: none;
   }
@@ -888,17 +969,28 @@ select {
   }
 
   .topbar-actions,
-  .meeting-card-head,
   .meeting-card-foot,
   .card-head,
   .summary-actions,
   .upload-actions,
   .modal-actions,
   .inline-actions,
-  .workspace-actions,
-  .workspace-primary-actions {
+  .workspace-actions {
     flex-direction: column;
     align-items: stretch;
+  }
+
+  .workspace-card-head {
+    flex-direction: row;
+    align-items: flex-start;
+  }
+
+  .workspace-card-head .btn {
+    width: auto;
+    min-height: 32px;
+    padding: 6px 10px;
+    font-size: 13px;
+    align-self: flex-start;
   }
 
   .topbar-actions .btn,
