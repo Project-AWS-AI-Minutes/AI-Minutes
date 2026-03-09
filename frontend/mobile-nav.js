@@ -8,7 +8,7 @@
   const topbar = document.createElement('div');
   topbar.className = 'mobile-topbar';
   topbar.innerHTML = `
-    <div class="mobile-topbar-brand">MeetUs</div>
+    <a class="mobile-topbar-brand" id="mobile-brand-home-link" href="./workspaces.html">MeetUs</a>
     <button class="mobile-nav-toggle" type="button" aria-label="메뉴 열기" aria-expanded="false">☰</button>
   `;
 
@@ -18,6 +18,7 @@
   backdrop.setAttribute('aria-label', '메뉴 닫기');
 
   const toggleBtn = topbar.querySelector('.mobile-nav-toggle');
+  const brandHomeLink = topbar.querySelector('#mobile-brand-home-link');
 
   function closeNav() {
     document.body.classList.remove('nav-open');
@@ -36,6 +37,13 @@
     }
     openNav();
   });
+
+  if (brandHomeLink) {
+    brandHomeLink.addEventListener('click', () => {
+      window.localStorage.removeItem('meetus-current-workspace');
+      closeNav();
+    });
+  }
 
   backdrop.addEventListener('click', closeNav);
   sidebar.querySelectorAll('.nav-item').forEach((item) => item.addEventListener('click', closeNav));

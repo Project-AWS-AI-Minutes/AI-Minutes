@@ -516,7 +516,8 @@ select {
 .progress-meta,
 .inline-actions,
 .summary-actions,
-.workspace-actions {
+.workspace-actions,
+.workspace-primary-actions {
   display: flex;
   gap: var(--space-2);
   align-items: center;
@@ -567,6 +568,29 @@ select {
 
 .workspace-grid {
   grid-template-columns: minmax(0, 1fr) 320px;
+}
+
+.workspace-primary-actions {
+  justify-content: flex-end;
+}
+
+.workspace-delete-confirm {
+  margin-top: var(--space-2);
+  padding: var(--space-3);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  background: var(--surface-strong);
+}
+
+.workspace-delete-confirm p {
+  margin: 0 0 var(--space-2);
+}
+
+.workspace-text-button {
+  margin-top: 0;
+  width: auto;
+  display: inline-block;
+  text-align: left;
 }
 
 .transcript-item,
@@ -870,7 +894,9 @@ select {
   .summary-actions,
   .upload-actions,
   .modal-actions,
-  .inline-actions {
+  .inline-actions,
+  .workspace-actions,
+  .workspace-primary-actions {
     flex-direction: column;
     align-items: stretch;
   }

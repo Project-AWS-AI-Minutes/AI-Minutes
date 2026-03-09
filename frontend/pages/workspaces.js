@@ -105,18 +105,10 @@ function createWorkspaceCard(workspace) {
         <p class="eyebrow">${roleLabel}</p>
         <h3>${workspace.name}</h3>
       </div>
-      <span class="badge ${isCurrent ? 'stage-COMPLETED' : 'stage-UPLOADED'}">${isCurrent ? '현재 선택' : '선택 가능'}</span>
+      <button class="btn btn-primary" type="button" data-select>선택하기</button>
     </div>
     <p class="muted" style="margin: 0 0 14px;">${workspace.description || '워크스페이스 설명 정보가 없습니다.'}</p>
     <p class="muted" style="margin: 0 0 14px;">권한: ${roleLabel}</p>
-    <p class="muted" style="margin: 0 0 14px;"><strong>멤버 목록</strong><br />${memberRows}</p>
-    <div class="meeting-card-foot">
-      <span class="muted">ID: ${workspace.workspaceId}</span>
-      <button class="btn ${isCurrent ? '' : 'btn-primary'}" type="button">${isCurrent ? '회의 보기' : '선택하기'}</button>
-    </div>
-    <div class="workspace-actions">
-      ${isOwner ? '<button class="btn btn-danger" type="button" data-delete>워크스페이스 삭제</button>' : '<button class="btn" type="button" data-leave>워크스페이스 나가기</button>'}
-    </div>
     ${isOwner ? `
       <div class="auth-form" style="margin-top: 16px;">
         <div class="field">
@@ -126,17 +118,34 @@ function createWorkspaceCard(workspace) {
         <button class="btn" type="button" data-invite="${workspace.workspaceId}">유저 초대</button>
       </div>
     ` : ''}
+    <div class="workspace-actions">
+      ${isOwner ? '<button class="auth-switch-link workspace-text-button" type="button" data-delete>워크스페이스 삭제</button>' : '<button class="btn" type="button" data-leave>워크스페이스 나가기</button>'}
+    </div>
+    ${isOwner ? `
+      <div class="workspace-delete-confirm hidden" data-delete-confirm>
+        <p class="muted">정말 삭제하시겠습니까? 워크스페이스와 회의 데이터가 함께 삭제됩니다.</p>
+        <div class="workspace-primary-actions">
+          <button class="btn" type="button" data-delete-cancel>취소</button>
+          <button class="btn btn-danger" type="button" data-delete-confirm-btn>삭제</button>
+        </div>
+      </div>
+    ` : ''}
   `;
 
-  card.querySelector('button').addEventListener('click', () => {
+  const selectBtn = card.querySelector('[data-select]');
+  selectBtn.addEventListener('click', () => {
     setCurrentWorkspace(workspace);
-    window.location.href = './index.html';
+    window.location.href = './dashboard.html';
   });
 
   if (isOwner) {
     const inviteBtn = card.querySelector(`[data-invite="${workspace.workspaceId}"]`);
     const inviteInput = card.querySelector(`#invite-${workspace.workspaceId}`);
     const deleteBtn = card.querySelector('[data-delete]');
+    const deleteConfirmBox = card.querySelector('[data-delete-confirm]');
+    const deleteCancelBtn = card.querySelector('[data-delete-cancel]');
+    const deleteConfirmBtn = card.querySelector('[data-delete-confirm-btn]');
+
     inviteBtn.addEventListener('click', async () => {
       try {
         await inviteUserToWorkspace(workspace.workspaceId, inviteInput.value);
@@ -147,10 +156,13 @@ function createWorkspaceCard(workspace) {
         workspaceErrorEl.textContent = error.message;
       }
     });
-    deleteBtn.addEventListener('click', async () => {
-      if (!window.confirm('해당 워크스페이스와 회의 데이터를 삭제하시겠습니까?')) {
-        return;
-      }
+    deleteBtn.addEventListener('click', () => {
+      deleteConfirmBox.classList.remove('hidden');
+    });
+    deleteCancelBtn.addEventListener('click', () => {
+      deleteConfirmBox.classList.add('hidden');
+    });
+    deleteConfirmBtn.addEventListener('click', async () => {
       try {
         await deleteWorkspace(workspace.workspaceId);
         await loadWorkspaces();

@@ -35,6 +35,7 @@ function normalizeWorkspace(item = {}) {
   return {
     workspaceId: item.workspace_id || item.workspaceId || '',
     name: item.name || '이름 없는 워크스페이스',
+    description: item.description || '',
     role: item.role || 'MEMBER'
   };
 }
@@ -56,7 +57,7 @@ export async function getVisibleWorkspaces() {
   return items.map(normalizeWorkspace);
 }
 
-export async function createWorkspace({ name }) {
+export async function createWorkspace({ name, description }) {
   if (!name?.trim()) {
     throw new Error('워크스페이스 이름을 입력해주세요.');
   }
@@ -64,12 +65,16 @@ export async function createWorkspace({ name }) {
   const payload = await request('/workspaces', {
     method: 'POST',
     headers: getHeaders({ 'Content-Type': 'application/json' }),
-    body: JSON.stringify({ name: name.trim() })
+    body: JSON.stringify({
+      name: name.trim(),
+      description: (description || '').trim()
+    })
   });
 
   return normalizeWorkspace({
     workspace_id: payload?.workspace_id,
     name: payload?.name,
+    description: payload?.description,
     role: 'OWNER'
   });
 }

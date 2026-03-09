@@ -5,6 +5,16 @@
   }
 
   const page = window.location.pathname.split('/').pop() || 'index.html';
+  const currentWorkspaceRaw = window.localStorage.getItem('meetus-current-workspace');
+  let hasSelectedWorkspace = false;
+  if (currentWorkspaceRaw) {
+    try {
+      const parsed = JSON.parse(currentWorkspaceRaw);
+      hasSelectedWorkspace = Boolean(parsed?.workspaceId);
+    } catch {
+      hasSelectedWorkspace = false;
+    }
+  }
   const activeByPage = {
     'workspaces.html': 'workspaces',
     'dashboard.html': 'dashboard',
@@ -13,16 +23,26 @@
     'meeting.html': 'meetings',
     'archive.html': 'archive'
   };
-  const activeKey = activeByPage[page] || 'meetings';
+  const isWorkspaceCreate = page === 'workspaces.html' && window.location.search.includes('modal=create');
+  const activeKey = isWorkspaceCreate ? 'workspace-create' : (activeByPage[page] || 'meetings');
 
-  const navItems = [
-    { key: 'workspaces', label: '워크스페이스', href: './workspaces.html' },
-    { key: 'workspace-create', label: '워크스페이스 생성', href: './workspaces.html?modal=create' },
-    { key: 'dashboard', label: '대시보드', href: './dashboard.html' },
-    { key: 'upload', label: '회의 업로드', href: './upload.html' },
-    { key: 'meetings', label: '회의 목록', href: './index.html' },
-    { key: 'archive', label: '아카이브', href: './archive.html' }
-  ];
+  const showWorkspaceEntryMenu = page === 'workspaces.html';
+  const navItems = showWorkspaceEntryMenu
+    ? [
+        { key: 'workspaces', label: '워크스페이스', href: './workspaces.html' },
+        { key: 'workspace-create', label: '워크스페이스 생성', href: './workspaces.html?modal=create' }
+      ]
+    : hasSelectedWorkspace
+    ? [
+        { key: 'dashboard', label: '대시보드', href: './dashboard.html' },
+        { key: 'upload', label: '회의 업로드', href: './upload.html' },
+        { key: 'meetings', label: '회의 목록', href: './index.html' },
+        { key: 'archive', label: '아카이브', href: './archive.html' }
+      ]
+    : [
+        { key: 'workspaces', label: '워크스페이스', href: './workspaces.html' },
+        { key: 'workspace-create', label: '워크스페이스 생성', href: './workspaces.html?modal=create' }
+      ];
 
   const navHtml = navItems
     .map((item) => {
@@ -33,7 +53,7 @@
 
   sidebar.innerHTML = `
     <div class="brand-block">
-      <h1>MeetUs</h1>
+      <h1><a id="brand-home-link" href="./workspaces.html">MeetUs</a></h1>
     </div>
     <nav class="nav-group">
       ${navHtml}
@@ -52,4 +72,11 @@
       <button id="logout-btn" class="sidebar-logout-btn" type="button">로그아웃</button>
     </div>
   `;
+
+  const brandHomeLink = sidebar.querySelector('#brand-home-link');
+  if (brandHomeLink) {
+    brandHomeLink.addEventListener('click', () => {
+      window.localStorage.removeItem('meetus-current-workspace');
+    });
+  }
 })();
