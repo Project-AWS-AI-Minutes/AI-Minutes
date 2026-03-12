@@ -23,6 +23,10 @@
         { "name": "AWS_REGION", "value": "ap-northeast-2" },
         { "name": "S3_BUCKET_NAME", "value": "meetus-audio-storage" },
         {
+          "name": "TRANSCRIBE_DATA_ACCESS_ROLE_ARN",
+          "value": "arn:aws:iam::818466672325:role/MeetUs-SA-TaskRole"
+        },
+        {
           "name": "SQS_QUEUE_URL",
           "value": "https://sqs.ap-northeast-2.amazonaws.com/692681389373/meetus-process-queue"
         },

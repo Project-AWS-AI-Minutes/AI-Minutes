@@ -16,6 +16,7 @@ class STTProcessor:
             'transcribe',
             region_name=config.AWS_REGION
         )
+        self.data_access_role_arn = config.TRANSCRIBE_DATA_ACCESS_ROLE_ARN
         
     def process_audio(self, s3_uri: str) -> str:
         """
@@ -31,11 +32,21 @@ class STTProcessor:
         
         # 1. Transcribe Job 시작
         try:
+            request = {
+                'TranscriptionJobName': job_name,
+                'Media': {'MediaFileUri': s3_uri},
+                'MediaFormat': 'm4a', # 프론트엔드 명세와 동일하게 m4a 한정
+                'LanguageCode': 'ko-KR' # 항상 한국어 회의로 가정
+            }
+            if self.data_access_role_arn:
+                request['JobExecutionSettings'] = {
+                    'AllowDeferredExecution': True,
+                    'DataAccessRoleArn': self.data_access_role_arn
+                }
+                print(f"[STT] Using DataAccessRoleArn: {self.data_access_role_arn}")
+
             self.transcribe_client.start_transcription_job(
-                TranscriptionJobName=job_name,
-                Media={'MediaFileUri': s3_uri},
-                MediaFormat='m4a', # 프론트엔드 명세와 동일하게 m4a 한정
-                LanguageCode='ko-KR' # 항상 한국어 회의로 가정
+                **request
             )
         except Exception as e:
             print(f"[STT_ERROR] Start failed: {e}")

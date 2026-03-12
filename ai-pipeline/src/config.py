@@ -16,6 +16,7 @@ class Config:
     AWS_SECRET_ACCESS_KEY = os.getenv("AWS_SECRET_ACCESS_KEY")
     AWS_REGION = os.getenv("AWS_REGION", "ap-northeast-2")
     S3_BUCKET_NAME = os.getenv("S3_BUCKET_NAME", "meetus-audio-storage")
+    TRANSCRIBE_DATA_ACCESS_ROLE_ARN = os.getenv("TRANSCRIBE_DATA_ACCESS_ROLE_ARN")
     
 
     # [Network Settings]
