@@ -6,6 +6,8 @@ from typing import Optional
 
 import boto3
 from botocore.exceptions import BotoCoreError, ClientError
+import uuid
+
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 
@@ -26,6 +28,7 @@ from app.models.todo import Todo
 from app.models.user import User
 from app.models.workspace import Workspace
 from app.models.workspace_member import WorkspaceMember
+from app.models.workspace import Workspace
 from app.dependencies.auth import get_current_user_id
 
 router = APIRouter(
@@ -220,6 +223,42 @@ def delete_meeting(
     meeting_id: str,
     db: Session = Depends(get_db),
     user_id: str | None = Depends(get_current_user_id),
+):
+    if not user_id:
+        raise HTTPException(status_code=401, detail="Unauthorized")
+
+    try:
+        user_uuid = uuid.UUID(user_id)
+    except ValueError:
+        raise HTTPException(status_code=401, detail="Unauthorized")
+
+    meeting = db.query(Meeting).filter(Meeting.meeting_id == meeting_id).first()
+    if not meeting:
+        raise HTTPException(status_code=404, detail="Meeting not found")
+
+    workspace = db.query(Workspace).filter(Workspace.workspace_id == meeting.workspace_id).first()
+    if not workspace:
+        raise HTTPException(status_code=404, detail="Workspace not found")
+
+    if workspace.owner_id != user_uuid:
+        raise HTTPException(status_code=403, detail="Only workspace owner can delete meetings")
+
+    db.query(Todo).filter(Todo.meeting_id == meeting.meeting_id).delete(synchronize_session=False)
+    db.query(Transcript).filter(Transcript.meeting_id == meeting.meeting_id).delete(synchronize_session=False)
+    db.query(Summary).filter(Summary.meeting_id == meeting.meeting_id).delete(synchronize_session=False)
+    db.delete(meeting)
+    db.commit()
+    
+    # TODO: SQS 메시지 전송 로직 추가 필요
+    
+    return {"status": "PROCESSING"}
+
+
+@router.delete("/{meeting_id}")
+def delete_meeting(
+    meeting_id: str,
+    db: Session = Depends(get_db),
+    user_id: str | None = Depends(get_current_user_id)
 ):
     if not user_id:
         raise HTTPException(status_code=401, detail="Unauthorized")

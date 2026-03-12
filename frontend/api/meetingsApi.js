@@ -259,6 +259,19 @@ export async function retryMeetingProcessing(meetingId) {
   return getMeetingById(meetingId);
 }
 
+export async function deleteMeeting(meetingId) {
+  await request(`/meetings/${encodeURIComponent(meetingId)}`, {
+    method: 'DELETE',
+    headers: getHeaders()
+  });
+
+  const meta = readMeetingMeta();
+  if (meta[meetingId]) {
+    delete meta[meetingId];
+    writeMeetingMeta(meta);
+  }
+}
+
 export function getDisplayStatusMeta(status) {
   const map = {
     CREATED: {
