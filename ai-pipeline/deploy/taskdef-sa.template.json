@@ -5,6 +5,7 @@
   "cpu": "512",
   "memory": "1024",
   "executionRoleArn": "arn:aws:iam::818466672325:role/ecsTaskExecutionRole",
+  "taskRoleArn": "arn:aws:iam::818466672325:role/MeetUs-SA-TaskRole",
   "containerDefinitions": [
     {
       "name": "ai-minutes-sa",
