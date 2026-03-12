@@ -1,3 +1,5 @@
+from uuid import UUID
+
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
 from datetime import date
@@ -23,7 +25,7 @@ class AiTodoPayload(BaseModel):
 
 
 class AiResultRequest(BaseModel):
-    meeting_id: str
+    meeting_id: UUID
     transcript: str
     summary: str
     decisions: str
@@ -94,7 +96,7 @@ def save_ai_result(body: AiResultRequest, db: Session = Depends(get_db)):
 
 
 class AiFailedRequest(BaseModel):
-    meeting_id: str
+    meeting_id: UUID
     reason: str | None = None
 
 
