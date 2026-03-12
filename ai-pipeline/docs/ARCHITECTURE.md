@@ -11,7 +11,7 @@ AI 처리(STT 및 LLM)는 짧게는 수십 초에서 길게는 수 분이 걸리
 3. **[Core DB & SQS]** TA 서버는 DB에 회의 정보(상태: `CREATED -> UPLOADED` 전이)를 저장하고, AWS SQS에 AI 작업 지시 메시지를 발행.
 4. **[AI 서버 폴링]** SA 파이썬 엔진은 백그라운드에서 SQS를 폴링하다가 메시지를 수신 (상태: `PROCESSING`으로 자동 전이 확인).
 5. **[AI Processing]**
-   - SQS 메시지를 수신하여 AWS Transcribe 및 Bedrock(Claude 3) 파이프라인 가동.
+   - SQS 메시지를 수신하여 AWS Transcribe 및 Bedrock(Claude 3.5 Sonnet) 파이프라인 가동.
    - 음성 텍스트 변환, 요약, 결정사항, To-Do 추출을 수행.
 6. **[AI ➡️ Core API]** AI 처리가 완료되면 SA 엔진이 Core API(웹훅 형태)를 호출하여 결과 데이터(JSON)를 전송합니다. (Core API가 DB에 데이터를 적재하고 `COMPLETED`로 업데이트). 에러가 3회 누적되면 Dead Letter Queue로 이동 후 최종 `FAILED` 처리.
 
@@ -28,8 +28,8 @@ AI 처리(STT 및 LLM)는 짧게는 수십 초에서 길게는 수 분이 걸리
 ## 3. 핵심 시스템 컴포넌트
 * **Frontend (AA):** Vanilla JS / Nginx (상태값 기반 렌더링)
 * **Core API (TA):** Python (FastAPI) (인증, 회의/상태 관리, Presigned URL 발급, SQS Producer)
-* **AI Processing Service (SA):** Python 3.12 (Worker/FastAPI, Boto3, Amazon Bedrock 연동, SQS Consumer, 실패 3회 재처리 로직)
-* **Infrastructure:** AWS S3 (오디오), AWS SQS (큐), AWS Transcribe (음성), AWS ECS (단일 운영 배포 환경, 블루/그린 적용), AWS ECR (이미지)
+* **AI Processing Service (SA):** Python 3.12 (Worker/FastAPI, Boto3, Amazon Bedrock Claude 3.5 Sonnet 연동, SQS Consumer, 실패 3회 재처리 로직)
+* **Infrastructure:** AWS S3 (오디오), AWS SQS (큐), AWS Transcribe (음성), AWS ECS (단일 운영 배포 환경, 롤링 업데이트 적용), AWS ECR (이미지)
 
 ---
 
@@ -60,9 +60,9 @@ sequenceDiagram
     end
 
     box LavenderBlush AI 파이프라인 (SA: 주환)
-        participant AI as 파이썬 AI
+        participant AI as 파이썬 AI 엔진
         participant STT as AWS STT
-        participant LLM as Bedrock
+        participant LLM as Bedrock (Claude 3.5 Sonnet)
     end
 
     %% 1단계: 업로드 준비
@@ -88,14 +88,24 @@ sequenceDiagram
     %% 4단계: AI 엔진 작업
     SQS-->>AI: 메시지 낚아챔 (작업 시작)
     Note over AI: 상태는 이미 [PROCESSING] <br/>(Back-end 자동 전이)
-    AI->>STT: 음성을 텍스트 변환 요청
-    STT-->>AI: 원본 텍스트 반환
-    AI->>LLM: 요약 및 To-Do 추출 요청
-    LLM-->>AI: 정형화 데이터 반환 (JSON)
     
-    %% 5단계: 마무리
-    AI->>Core: 최종 처리 결과 전달 (Webhook)
-    Core->>DB: 결과 적재 및 [COMPLETED]
+    rect rgb(240, 240, 240)
+        Note over AI, LLM: AI 파이프라인 가동
+        AI->>STT: 음성을 텍스트 변환 요청
+        STT-->>AI: 원본 텍스트 반환
+        AI->>LLM: 요약 및 To-Do 추출 요청
+        LLM-->>AI: 정형화 데이터 반환 (JSON)
+    end
+    
+    %% 5단계: 마무리 (성공/실패 분기)
+    alt 분석 성공 (Success Path)
+        AI->>Core: 최종 처리 결과 전달 (POST /internal/ai/result)
+        Core->>DB: 결과 적재 및 [COMPLETED] 전이
+    else 분석 실패 (Failure Path)
+        AI->>Core: 실패 사유 통보 (POST /internal/ai/failed)
+        Core->>DB: 상태를 [FAILED]로 변경 및 사유 기록
+    end
+    
     Client->>Core: 최종 데이터 로드 확인
     Core->>DB: 데이터 조회
     DB-->>Core: 취합된 결과 반환

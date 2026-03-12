@@ -52,3 +52,10 @@
 5. **[공통] 도커 환경변수(.env) 파싱 오류**
    - **증상:** 백엔드 도커 기동 시 `invalid env file: ... contains whitespaces` 크래시 발생.
    - **조치:** 환경변수 할당 규격(`DATABASE_URL=...`)에 맞춰 등호 주변 공백을 제거하여 컨테이너 기동 안정화.
+6. **[공통/배포] ECS Task Definition 로그 그룹 및 컨테이너 이름 불일치**
+   - **증상:** 배포 성공 후에도 로그가 남지 않거나 태스크가 즉시 종료됨.
+   - **원인:** Task Definition의 `awslogs-group` 이름이 실제와 다르거나, 컨테이너 이름이 기존 인프라 설정(`meetus-sa-container`)과 어긋남.
+   - **조치:** 템플릿 파일을 실제 인프라 및 통합 가이드라인에 맞춰 1:1 매칭 수정 완료.
+7. **[보안/권한] iam:PassRole 및 GitHub Actions 안정화 대기**
+   - **증상:** 서비스 업데이트 권한 부족(`AccessDenied`) 및 배포 결과 반영 지연.
+   - **조치:** OIDC Role에 `iam:PassRole` 권한 추가 및 워크플로우에 `services-stable` 대기 단계 도입으로 해결.

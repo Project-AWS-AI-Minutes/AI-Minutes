@@ -6,12 +6,12 @@
 ### 1.1 적용 범위
 - 언어: Python 3.12 (가상환경 분리)
 - 도커: `python:3.12-slim` 패키지(경량화)
-- AWS 서비스: AWS SQS, AWS Transcribe, Amazon Bedrock (Claude 3_Sonnet), ECR & ECS (Fargate)
+- AWS 서비스: AWS SQS, AWS Transcribe, Amazon Bedrock (Claude 3.5 Sonnet), ECR & ECS (Fargate)
 
 ### 1.2 설계 원칙
 - AI 모델 내부를 직접 구성하지 않고 AWS Managed Service의 API 연동 위주로 구축하여 유지보수성 극대화.
 - STT, LLM과 같은 무거운 작업 중 스레드가 막히지 않도록(Non-blocking) 비동기 롱 폴링 위주로 설계.
-- 배포 전략: ECS(Fargate) 기반의 Blue-Green 무중단 배포 적용.
+- 배포 전략: ECS(Fargate) 기반의 Rolling Update 무중단 배포 적용.
 - 데이터 적재: AI 결과의 무결성을 위해 백엔드 Core API 웹훅을 호출하여 JSON 결과를 전달(Webhook API 연동).
 - 장애 대응: SQS 메시지 에러 시 자체 3회 재처리 후 자동 DLQ 연계 아키텍처 가정.
 
@@ -25,8 +25,8 @@
 ### 2.2 요청 흐름 (1-Cycle)
 1. 프론트/백엔드에 의해 AWS SQS 대기열에 '새로운 음성이 업로드 됨' 이라는 JSON 메시지가 꽂힌다. (상태: `UPLOADED`)
 2. `sqs_listener.py`는 24시간 백그라운드로 돌면서 20초 주기(Long Polling)로 메시지를 낚아챈다. (이 시점에 백엔드에서 이미 상태를 `PROCESSING`으로 변경 완료)
-3. `stt_processor.py`가 AWS Transcribe에 음성 S3 주소를 넘겨 전체 자막(Text)을 받아온다.
-4. 변환된 텍스트를 `llm_processor.py`가 Amazon Bedrock (Claude 3)으로 던져 특정 JSON 포맷(요약 및 To-Do)으로 리턴받는다.
+3. `stt_processor.py`가 AWS Transcribe에 음성 S3 주소를 넘겨 전체 자막(Text)을 받아온다. (S3 URI 자동 보정 로직 포함)
+4. 변환된 텍스트를 `llm_processor.py`가 Amazon Bedrock (Claude 3.5 Sonnet)으로 던져 특정 JSON 포맷(요약 및 To-Do)으로 리턴받는다.
 5. `api_client.py`가 최종 취합된 로직(STT, 요약, To-Do JSON)을 백엔드 Core API의 웹훅으로 전송한다. (상태 변경 및 데이터 적재는 백엔드가 수행)
 6. 에러 없이 5번이 끝나면 SQS에서 메시지를 안전하게 지운다(Ack).
 
