@@ -15,8 +15,8 @@ ai-pipeline/
     ├── config.py         # 1. 중앙 환경 변수 로드 및 통제소
     ├── sqs_listener.py   # 2. 메시지 수신 및 전체 파이프라인(Main) 컨트롤러 
     ├── core/             # 3. AI 변환 코어 비즈니스 로직
-    │   ├── stt_processor.py # 음성 -> 텍스트 변환 (AWS Transcribe)
-    │   └── llm_processor.py # 텍스트 -> 요약/할일 JSON 변환 (Amazon Bedrock)
+    │   ├── stt_processor.py # 음성 -> 텍스트 변환 (AWS Transcribe, S3 URI 보정 포함)
+    │   └── llm_processor.py # 텍스트 -> 요약/할일 JSON 변환 (Amazon Bedrock Claude 3.5 Sonnet)
     └── network/          # 4. 외부 통신 로직
         └── api_client.py    # 결과물 DB 적재를 위한 Core API 서버 통신
 ```
@@ -28,8 +28,8 @@ ai-pipeline/
 *   `sqs_listener.py`: 파이프라인의 심장입니다. AWS SQS를 24시간 롱 폴링(20초 대기)하다가 `UPLOADED` 이벤트 메시지가 오면 낚아채서 `stt` -> `llm` -> `api` 모듈들을 순서대로 지휘(Orchestrate)합니다. **(최대 3회 실패 시 FAILED 처리 로직 포함)**
 
 ### 🧠 코어 로직: `core/stt_processor.py` & `core/llm_processor.py`
-*   `stt_processor.py`: SQS 메시지에 담긴 S3 오디오 파일(`m4a` 등) URI를 받아 AWS Transcribe에 던지고, 작업이 완료되면 전체 원본 텍스트를 추출해서 반환합니다.
-*   `llm_processor.py`: STT 텍스트를 입력받아 프롬프트 엔지니어링을 거쳐 다음 두 가지를 완수합니다.
+*   `stt_processor.py`: SQS 메시지에 담긴 S3 오디오 파일(`m4a` 등) URI를 받아 AWS Transcribe에 던지고, 작업이 완료되면 전체 원본 텍스트를 추출해서 반환합니다. (URI 접두사 누락 시 자동 보정 로직 내장)
+*   `llm_processor.py`: STT 텍스트를 입력받아 프롬프트 엔지니어링을 거쳐 다음 두 가지를 완수합니다. (Claude 3.5 Sonnet 활용)
     1.  전체 5~7줄 요약 및 결정사항 추출
     2.  `assignee`, `task`, `due_date` 필드를 가진 담당자별 To-Do 배열을 완벽한 JSON 형식으로 추출.
 

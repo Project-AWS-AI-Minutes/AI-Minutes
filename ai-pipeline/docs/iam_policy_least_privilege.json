@@ -30,6 +30,28 @@
                 "ecr:GetAuthorizationToken"
             ],
             "Resource": "*"
+        },
+        {
+            "Sid": "AllowS3Access",
+            "Effect": "Allow",
+            "Action": [
+                "s3:GetObject",
+                "s3:ListBucket"
+            ],
+            "Resource": [
+                "arn:aws:s3:::meetus-audio-storage",
+                "arn:aws:s3:::meetus-audio-storage/*"
+            ]
+        },
+        {
+            "Sid": "AllowSQSAccess",
+            "Effect": "Allow",
+            "Action": [
+                "sqs:ReceiveMessage",
+                "sqs:DeleteMessage",
+                "sqs:GetQueueAttributes"
+            ],
+            "Resource": "arn:aws:sqs:ap-northeast-2:692681389373:meetus-process-queue"
         }
     ]
 }

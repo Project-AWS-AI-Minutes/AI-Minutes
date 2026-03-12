@@ -50,6 +50,28 @@
    - **문제:** 백엔드 도커 컨테이너가 기동 직후 `invalid env file: ... contains whitespaces` 에러를 뿜으며 즉시 종료됨.
    - **원인:** 환경변수 주입 시 `DATABASE_URL = ...` 처럼 등호 양옆에 공백이 포함된 휴먼 에러 확인.
    - **조치:** 도커 빌드/실행 환경변수 문법에 맞춰 공백을 제거(`DATABASE_URL=...`)하여 컨테이너 기동 안정화.
+10. **[공통/배포] ECS Task Definition 내 로그 그룹 이름 불일치**
+   - **문제:** 배포 성공 후에도 로그가 남지 않고 태스크가 `ResourceNotFoundException`으로 즉시 종료됨.
+   - **원인:** Task Definition 파일의 `awslogs-group` 설정이 실제 AWS에 생성된 이름(`/ecs/meetus-sa-container`)과 다르게 기재됨.
+   - **해결:** 실제 로그 저장소 이름과 정확히 1:1 매칭되도록 템플릿 파일 수정 후 재배포 완료.
+11. **[보안/권한] iam:PassRole 권한 부족으로 인한 배포 실패**
+   - **문제:** GitHub Actions에서 서비스 업데이트 시 `AccessDeniedException` 발생.
+   - **원인:** GitHub Actions용 OIDC Role이 새로 만든 `MeetUs-SA-TaskRole`을 ECS에 전달할 권한이 없음.
+   - **해결:** OIDC Role의 정책에 `iam:PassRole` 대상을 명시적으로 추가하여 해결.
+12. **[공통/배포] GitHub Action 성공 후 반영 지연 및 롤링 업데이트 정체**
+   - **문제:** 깃허브 액션은 성공으로 뜨는데 AWS ECS에는 예전 태스크가 여전히 돌고 있고 새 버전이 반영되지 않음.
+   - **원인:** ECS 롤링 업데이트는 `minimumHealthyPercent`(보통 100%) 규정에 따라 새 컨테이너가 완벽히 'Healthy' 상태가 되어야 옛날 것을 죽임. 만약 새 버전이 환경 설정(로그 그룹 등) 문제로 뜨지 못하면 계속 옛날 버전에 머물게 됨.
+   - **해결:** 
+     - 1) 워크플로우에 `aws ecs wait services-stable`을 추가하여 배포 완료 여부를 깃허브에서 끝까지 감시하도록 개선.
+     - 2) **[실전 팁]** 배포가 꼬였을 경우, 사용자가 **직접 기존 태스크를 모두 '중지(Stop)'**시키면 ECS가 강제로 최신 태스크 정의를 물고 새 컨테이너를 즉시 기동하게 되어 정체 현상을 가장 빠르게 해결할 수 있음.
+13. **[공통/환경] 모듈 참조 경로 오류 (Internal Module Import Error)**
+   - **문제:** 터미널에서 `sqs_listener.py` 실행 시 `ModuleNotFoundError: No module named 'src'` 발생.
+   - **원인:** 파이썬 실행 시 현재 디렉토리가 `sys.path`에 포함되지 않아 발생하는 경로 인식 문제.
+   - **해결:** 모든 메인 스크립트 상단에 `sys.path.append` 로직을 수동 추가하여 실행 위치에 상관없이 모듈을 찾도록 보정.
+14. **[설계/운영] 컨테이너 이름 일관성 유지 (Integration Drift)**
+   - **문제:** 태스크 정의의 컨테이너 이름을 리포지토리명(`ai-minutes-sa`)과 맞추려다 기존 설정과 충돌 발생.
+   - **원인:** 백엔드(TA) 및 기존 인프라가 `meetus-sa-container`라는 이름을 기반으로 세팅되어 있었음.
+   - **해결:** 인프라 파츠 간의 약속된 컨벤션(`meetus-sa-container`)으로 이름을 원복하여 연동 무결성 확보.
 
 ## 🛠️ 향후 작업 예정 로직 (Draft)
 - SQS 리스너 구현 시 `WaitTimeSeconds=20` 설정을 통해 비용 최적화(Long Polling) 적용 예정.
@@ -78,10 +100,16 @@
 - **비동기 롱 폴링(Long Polling) 설계:** AI 모델(Transcribe, Bedrock)의 처리는 수 분이 걸리므로, API 타임아웃(HTTP 504) 방지를 위해 백엔드와 SA 엔진 사이에 AWS SQS(`meetus-process-queue`) 브로커를 두는 비동기 아키텍처를 적용했습니다.
 - **크로스 계정(Cross-Account) 권한 문제 해결:** TA(단비님) 파트 소유의 계정(6926...)에 위치한 SQS 큐를 우리 SA 계정(8184...)에서 접근하려다 발생한 `AccessDenied` 에러의 본질을 정확히 간파했습니다. IAM Role 검토에 그치지 않고, TA 측에 필요한 'SQS Resource-Based Policy (리소스 기반 액세스 정책)' JSON 템플릿을 직접 제공하여 교차 계정 보안 방화벽 문제를 주도적으로 뚫어냈습니다.
 
-### 5️⃣ [AI 비즈니스 로직] AWS Transcribe & Amazon Bedrock (Claude 3_Sonnet)
+### 5️⃣ [AI 비즈니스 로직] AWS Transcribe & Amazon Bedrock (Claude 3.5 Sonnet)
 - **All-AWS 에코시스템 고집:** 외부 API(OpenAI 등)를 사용할 경우 발생할 수 있는 데이터 유출 보안 리스크와 토큰 관리의 복잡성을 제거하기 위해, 오디오 전처리부터 최종 텍스트 추출까지 모든 과정을 AWS 내부망 Managed Service로 통일했습니다. 
-- **STT (Speech-to-Text):** `AWS Transcribe`를 호출하여 S3에 저장된 회의 음성(.m4a)을 화자 분리(Diarization) 없이 빠르고 평이하게 텍스트로 치환해냅니다.
-- **LLM (Large Language Model):** 추출된 원시 텍스트(Raw Text)를 `Amazon Bedrock (Claude 3)` 모델에 주입하여 프롬프트 엔지니어링을 수행합니다. "요약, 결정사항, 그리고 `assignee`, `task`, `due_date` 포맷의 To-Do 배열"을 무조건 JSON 형태로만 뱉어내도록 모델 통제력을 극대화했습니다.
+- **STT (Speech-to-Text):** `AWS Transcribe`를 호출하여 S3에 저장된 회의 음성(.m4a)을 화자 분리(Diarization) 없이 빠르고 평이하게 텍스트로 치환해냅니다. S3 URI가 불완전할 경우(접두사 누락 등) 자동으로 `s3://`를 보정하는 안정화 로직이 포함되었습니다.
+- **LLM (Large Language Model):** 추출된 원시 텍스트(Raw Text)를 **`Amazon Bedrock (Claude 3.5 Sonnet)`** 모델에 주입하여 프롬프트 엔지니어링을 수행합니다. "요약, 결정사항, 그리고 `assignee`, `task`, `due_date` 포맷의 To-Do 배열"을 무조건 JSON 형태로만 뱉어내도록 모델 통제력을 극대화했습니다.
+
+### 6️⃣ [배포 전략] ECS Rolling Update vs Blue/Green (★ 전략적 선택)
+본 프로젝트의 SA 엔진은 다음의 기술적 근거를 바탕으로 **ECS 롤링 업데이트** 방식을 채택하였습니다.
+- **비동기 Worker 아키텍처:** SA 엔진은 사용자와 직접 통신하는 대신 SQS 대기열을 감시하는 '일꾼'입니다. 배포 중 단기 공백이 발생하더라도 메시지는 SQS에 안전하게 보관되므로 데이터 유실 리스크가 0%입니다.
+- **ALB-Less 구조:** 외부 인바운드 트래픽이 없는 구조적 특성상, Blue/Green 배포를 위해 불필요하게 로드 밸런서(ALB)를 추가하여 인프라 비용과 복잡도를 높이는 대신, 현 구조에 최적화된 가장 가볍고 강력한 배포 방식을 선택했습니다.
+- **환경 변수 및 IAM Role 통합:** `latest` 태그와 `taskRoleArn`을 활용하여 배포 즉시 최신 보안 설정과 기능이 반영되도록 설계했습니다.
 
 ---
 
