@@ -82,7 +82,7 @@ async function renderMeetings() {
     }
 
     meetings.forEach((meeting) => {
-      meetingListEl.appendChild(createMeetingCard(meeting));
+      meetingListEl.appendChild(createMeetingCard(meeting, { canDelete: false }));
     });
   } catch (error) {
     emptyStateEl.textContent = `목록 로딩 실패: ${error.message}`;

@@ -70,7 +70,7 @@ async function renderDashboard() {
 
   recentMeetingsEl.innerHTML = '';
   meetings.slice(0, 3).forEach((meeting) => {
-    recentMeetingsEl.appendChild(createMeetingCard(meeting));
+    recentMeetingsEl.appendChild(createMeetingCard(meeting, { canDelete: false }));
   });
 }
 

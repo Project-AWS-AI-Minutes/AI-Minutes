@@ -57,12 +57,96 @@
   - [workspaces page](../frontend/pages/workspaces.js)
   - [runtime config](../frontend/runtime-config.js)
 
-## 3) 캡처 증적 재배치
+## 3) AA 구성 및 흐름
+
+발표는 아래 순서로 설명하면 가장 자연스럽다.
+
+`서비스 흐름 설명 -> CI/CD 배포 흐름 설명 -> 실제 AWS 증적 제시 -> 트러블슈팅 설명`
+
+### 3.1 AA 서비스 흐름
+
+![AA Service flow](./img/AAsystemflow.png)
+
+이 그림은 사용자가 프론트 서비스에 접속하고, 프론트가 백엔드 및 스토리지와 연동되는 전체 서비스 흐름을 보여준다.
+
+- `User`
+  - 실제 서비스를 사용하는 사용자
+- `ALB`
+  - 사용자의 웹 요청을 가장 먼저 받는 프론트 진입점
+- `Frontend ECS Service`
+  - 사용자가 보는 프론트 페이지를 실제로 서비스하는 컨테이너
+- `Core API ECS Service`
+  - 회의 생성, 업로드 URL 발급, 결과 조회를 처리하는 백엔드 API
+- `S3`
+  - 회의 음성 파일이 업로드되는 저장소
+- `AI Processing Service`
+  - S3의 음성 파일을 읽고 전사/요약/액션아이템을 생성하는 처리 서비스
+- `RDS`
+  - 회의 메타데이터, 전사, 요약, 액션아이템 결과를 저장하는 데이터베이스
+- `CloudWatch`
+  - 프론트 ECS 로그를 수집하고 확인하는 운영 로그 저장소
+
+서비스 흐름 해석:
+
+1. 사용자가 브라우저에서 서비스에 접속한다.
+2. 요청은 `ALB` 를 거쳐 `Frontend ECS Service` 로 전달된다.
+3. 프론트는 회의 생성, 업로드 URL 발급, 결과 조회 등을 위해 `Core API ECS Service` 를 호출한다.
+4. 사용자는 `Presigned URL` 을 사용해 회의 음성을 `S3` 에 직접 업로드한다.
+5. `AI Processing Service` 가 `S3` 의 음성을 읽고 결과를 생성한다.
+6. 처리 결과는 `RDS` 에 저장되고, 프론트는 `Core API` 를 통해 다시 조회한다.
+7. 프론트 컨테이너에서 발생한 로그는 `CloudWatch` 로 수집된다.
+
+발표할 때는 이렇게 말하면 된다.
+
+- "사용자는 ALB를 통해 프론트 ECS로 들어오고, 프론트는 Core API와 통신합니다."
+- "회의 음성은 Presigned URL을 사용해서 S3에 직접 업로드됩니다."
+- "AI Processing Service가 음성을 처리한 뒤 RDS에 결과를 저장하고, 프론트가 다시 조회해서 보여주는 구조입니다."
+
+### 3.2 AA CI/CD 흐름
+
+![AA CICD flow](./img/AAcicdflow.png)
+
+이 그림은 프론트 코드가 변경됐을 때 자동으로 배포되는 CI/CD 흐름을 보여준다.
+
+- `GitHub`
+  - 프론트 코드가 올라가는 저장소
+- `IAM`
+  - GitHub Actions가 AWS 리소스를 건드릴 수 있게 해주는 권한
+- `GitHub Actions`
+  - 자동 배포 실행 주체
+  - 코드 변경 감지 후 빌드/배포 시작
+- `Docker Build`
+  - 프론트 코드를 Docker 이미지로 만듦
+- `ECR`
+  - 만들어진 Docker 이미지를 저장하는 AWS 이미지 저장소
+- `CodeDeploy`
+  - ECS에 새 버전을 반영하고, 필요하면 Blue-Green 배포를 제어
+- `ECS Frontend Service`
+  - 실제로 프론트가 떠 있는 서비스
+
+배포 흐름 해석:
+
+1. 프론트 코드를 `GitHub` 에 푸시한다.
+2. `GitHub Actions` 가 실행된다.
+3. `IAM` 권한을 이용해 AWS 리소스에 접근한다.
+4. `Docker Build` 로 프론트 이미지를 생성한다.
+5. 생성한 이미지를 `ECR` 에 푸시한다.
+6. `CodeDeploy` 가 ECS 배포를 제어한다.
+7. `ECR` 의 최신 이미지를 `ECS Frontend Service` 가 pull 받아 실행한다.
+8. `CodeDeploy` 가 새 버전을 반영하거나 트래픽 전환을 관리한다.
+
+발표할 때는 이렇게 말하면 된다.
+
+- "코드를 GitHub에 올리면 GitHub Actions가 실행됩니다."
+- "Actions가 Docker 이미지를 빌드해서 ECR에 올리고, CodeDeploy를 통해 ECS 프론트 서비스에 반영합니다."
+- "즉 프론트 배포는 GitHub Actions, Docker, ECR, ECS, CodeDeploy로 자동화했습니다."
+
+## 4) 캡처 증적 재배치
 
 - 아래 캡처는 현재 `AA/img` 폴더에 남아 있는 파일만 사용했다.
 - 일부 예전 증적은 삭제된 상태라 제외했고, 어제 CLI로 생성하거나 갱신한 리소스 흐름에 맞춰 다시 배치했다.
 
-### 3.1 AWS 권한 및 사전 준비
+### 4.1 AWS 권한 및 사전 준비
 
 IAM User 권한 확인
 
@@ -84,7 +168,7 @@ S3 Bucket CORS 설정
 
 ![S3 Bucket CORS](./img/CORS.png)
 
-### 3.2 어제 CLI 기반 프론트 인프라 생성 순서
+### 4.2 어제 CLI 기반 프론트 인프라 생성 순서
 
 ECS Cluster 생성
 
@@ -130,11 +214,9 @@ ECS Service 생성
 
 ![ECS Service](./img/ECS_service.png)
 
-최종 Frontend ECS + ALB 연결 확인
 
-![Frontend ECS + ALB](./img/front.png)
 
-### 3.3 화면 산출물
+### 4.3 화면 산출물
 
 초안
 
@@ -144,7 +226,7 @@ AA 산출물
 
 ![AA 산출물](./img/image3.png)
 
-## 4) AWS 프론트 배포 실제 실행 기록
+## 5) AWS 프론트 배포 실제 실행 기록
 
 - 아래 명령들은 `/home/xkak9/.bash_history` 에서 확인한 실제 실행 명령 기준으로 정리했다.
 - 출력 전체는 히스토리에 남지 않으므로, 이후 `export` 값과 캡처로 복원 가능한 결과를 함께 기록했다.
@@ -152,7 +234,7 @@ AA 산출물
   - 최초 구성 및 반복 시도 포함
   - 2026-03-11 전후 재배포 흐름 반영
 
-### 4.1 실제 복원 가능한 리소스 값
+### 5.1 실제 복원 가능한 리소스 값
 
 - AWS Region: `ap-northeast-2`
 - AWS Account ID: `712517669691`
@@ -182,7 +264,7 @@ AA 산출물
 - Core API Base URL:
   - `http://meetus-alb-858165370.ap-northeast-2.elb.amazonaws.com`
 
-### 4.2 실제 실행 순서 기준 명령 정리
+### 5.2 실제 실행 순서 기준 명령 정리
 
 #### 1. 서브넷 조회 및 추가 생성
 
@@ -434,7 +516,7 @@ aws deploy create-deployment-group --application-name "$CODEDEPLOY_APP" --deploy
 - 결과:
   - Blue / Green Target Group과 리스너를 사용하는 배포 구조 완성
 
-## 5) 현재 코드 및 설정과 연결되는 값
+## 6) 현재 코드 및 설정과 연결되는 값
 
 - 프론트 런타임 API 대상:
   - [frontend/runtime-config.js](../frontend/runtime-config.js)
@@ -444,9 +526,9 @@ aws deploy create-deployment-group --application-name "$CODEDEPLOY_APP" --deploy
 - Frontend AppSpec:
   - [frontend/deploy/appspec-frontend.yaml](../frontend/deploy/appspec-frontend.yaml)
 
-## 6) GitHub Actions / Docker 증적 정리
+## 7) GitHub Actions / Docker 증적 정리
 
-### 6.1 Docker 관련 작업
+### 7.1 Docker 관련 작업
 
 - 프론트 배포의 실제 아티팩트는 Docker 이미지다.
 - 정적 프론트 파일과 Nginx 설정을 이미지로 만들고, ECR에 Push한 뒤, ECS가 해당 이미지를 pull 받아 실행한다.
@@ -467,7 +549,7 @@ docker push 712517669691.dkr.ecr.ap-northeast-2.amazonaws.com/meetus-frontend:la
   - [Docker tag](./img/image_tag.png)
   - [ECR Push](./img/ECR_push.png)
 
-### 6.2 GitHub Actions가 하는 일
+### 7.2 GitHub Actions가 하는 일
 
 - GitHub Actions는 코드 변경 후 배포 파이프라인을 자동 실행하는 CI/CD 역할을 한다.
 - AA 문서 기준 배포 흐름은 다음 순서로 이해하면 된다.
@@ -478,7 +560,7 @@ docker push 712517669691.dkr.ecr.ap-northeast-2.amazonaws.com/meetus-frontend:la
   - [배포 구조 문서](./deployment-architecture.md)
   - [Frontend 시스템 설계](./frontend-system-design.md)
 
-### 6.3 증적으로 남기면 좋은 GitHub Actions 항목
+### 7.3 증적으로 남기면 좋은 GitHub Actions 항목
 
 - GitHub Actions 실행 이력
 - Build 성공 여부
@@ -486,7 +568,7 @@ docker push 712517669691.dkr.ecr.ap-northeast-2.amazonaws.com/meetus-frontend:la
 - ECR push 단계
 - ECS 또는 CodeDeploy 배포 반영 단계
 
-### 6.4 Docker / GitHub Actions / ECS 관계
+### 7.4 Docker / GitHub Actions / ECS 관계
 
 - Docker:
   - 배포할 컨테이너 이미지 생성
@@ -499,7 +581,7 @@ docker push 712517669691.dkr.ecr.ap-northeast-2.amazonaws.com/meetus-frontend:la
 - CodeDeploy:
   - Blue-Green 트래픽 전환과 배포 제어
 
-### 6.5 연결되는 파일
+### 7.5 연결되는 파일
 
 - [frontend/Dockerfile](../frontend/Dockerfile)
 - [frontend/deploy/taskdef-frontend.template.json](../frontend/deploy/taskdef-frontend.template.json)
@@ -507,9 +589,9 @@ docker push 712517669691.dkr.ecr.ap-northeast-2.amazonaws.com/meetus-frontend:la
 - [배포 구조 문서](./deployment-architecture.md)
 - [Frontend 시스템 설계](./frontend-system-design.md)
 
-## 7) 트러블슈팅
+## 8) 트러블슈팅
 
-### 7.1 새 이미지를 밀었는데 반영이 안 됨
+### 8.1 새 이미지를 밀었는데 반영이 안 됨
 
 - 증상:
   - 이미지를 다시 Push 했는데 화면이 그대로 보임
@@ -520,7 +602,7 @@ docker push 712517669691.dkr.ecr.ap-northeast-2.amazonaws.com/meetus-frontend:la
 - 결과:
   - 새 태스크가 다시 뜨면서 최신 이미지 기준으로 서비스 재기동
 
-### 7.2 Security Group 잘못 연결
+### 8.2 Security Group 잘못 연결
 
 - 증상:
   - 서비스는 떠도 ALB에서 붙지 않거나 Target Group health check 실패
@@ -533,7 +615,7 @@ docker push 712517669691.dkr.ecr.ap-northeast-2.amazonaws.com/meetus-frontend:la
   - ALB SG: `sg-090016810b3e0bee4`
   - ECS Frontend SG: `sg-025cf55ad88f862f4`
 
-### 7.3 단일 배포에서 Blue-Green 구조로 전환하면서 리소스명 혼재
+### 8.3 단일 배포에서 Blue-Green 구조로 전환하면서 리소스명 혼재
 
 - 증상:
   - `meetus-alb`, `ai-minutes-frontend-alb`, `meetus-frontend`, `ai-minutes-frontend` 등 이름이 혼재
@@ -544,7 +626,7 @@ docker push 712517669691.dkr.ecr.ap-northeast-2.amazonaws.com/meetus-frontend:la
 - 결과:
   - "실제 실행 흔적" 과 "최종 운영 구조" 를 분리해서 설명 가능
 
-### 7.4 API Base URL 정합성 확인
+### 8.4 API Base URL 정합성 확인
 
 - 증상:
   - 프론트 화면은 떠도 로그인/회의 조회가 실패할 수 있음
@@ -557,7 +639,7 @@ docker push 712517669691.dkr.ecr.ap-northeast-2.amazonaws.com/meetus-frontend:la
 - 결과:
   - 프론트 -> Core API 연결 경로 정렬
 
-### 7.5 CloudWatch Logs 미생성 시 로그 확인 어려움
+### 8.5 CloudWatch Logs 미생성 시 로그 확인 어려움
 
 - 증상:
   - 태스크 동작 여부는 보이는데 원인 로그를 바로 확인하기 어려움
@@ -566,9 +648,9 @@ docker push 712517669691.dkr.ecr.ap-northeast-2.amazonaws.com/meetus-frontend:la
 - 실제 값:
   - `LOG_GROUP=/ecs/meetus-frontend`
 
-## 8) IAM 권한 증적 메모
+## 9) IAM 권한 증적 메모
 
-### 8.1 확인 또는 필요 권한
+### 9.1 확인 또는 필요 권한
 
 - ECR:
   - `ecr:GetAuthorizationToken`
@@ -608,7 +690,7 @@ docker push 712517669691.dkr.ecr.ap-northeast-2.amazonaws.com/meetus-frontend:la
 - IAM:
   - `iam:PassRole`
 
-### 8.2 캡처 시 남기면 좋은 항목
+### 9.2 캡처 시 남기면 좋은 항목
 
 - 캡처 1:
   - IAM User `Permissions policies` 화면
@@ -625,7 +707,7 @@ docker push 712517669691.dkr.ecr.ap-northeast-2.amazonaws.com/meetus-frontend:la
 - 캡처 6:
   - Target Group health 가 `healthy` 로 보이는 화면
 
-### 8.3 주석 메모
+### 9.3 주석 메모
 
 <!-- 캡처본 삽입 위치: IAM User Permissions policies -->
 <!-- 캡처본 삽입 위치: iam:PassRole inline policy -->
@@ -633,7 +715,7 @@ docker push 712517669691.dkr.ecr.ap-northeast-2.amazonaws.com/meetus-frontend:la
 <!-- 캡처본 삽입 위치: ECS Service events -->
 <!-- 캡처본 삽입 위치: Target Group health -->
 
-## 9) 최종 요약
+## 10) 최종 요약
 
 - 문서 산출물은 TA 최신 API 스펙 기준으로 정리 완료
 - 프론트 배포는 ECS / ALB / ECR / CodeDeploy 기준으로 구성

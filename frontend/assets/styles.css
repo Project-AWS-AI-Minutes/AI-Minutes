@@ -259,6 +259,28 @@ select {
   background: #383838;
 }
 
+.detail-actions,
+.meeting-card-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  flex-wrap: wrap;
+}
+
+.meeting-card-delete {
+  border: 0;
+  background: transparent;
+  color: #b42318;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  padding: 0;
+}
+
+.meeting-card-delete:hover {
+  opacity: 0.72;
+}
+
 .btn-danger {
   background: var(--danger-soft);
   color: #ffd0d0;

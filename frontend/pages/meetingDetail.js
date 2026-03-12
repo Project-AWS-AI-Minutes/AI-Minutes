@@ -1,4 +1,4 @@
-import { getDisplayStatusMeta, getMeetingById, retryMeetingProcessing } from '../api/meetingsApi.js';
+import { deleteMeeting, getDisplayStatusMeta, getMeetingById, retryMeetingProcessing } from '../api/meetingsApi.js';
 import { logoutMock, requireSession } from '../api/sessionApi.js';
 import { requireWorkspace } from '../api/workspaceApi.js';
 import { formatDateTime } from '../utils/format.js';
@@ -9,6 +9,7 @@ const statusLabelEl = document.getElementById('status-label');
 const statusDescriptionEl = document.getElementById('status-description');
 const statusBannerEl = document.getElementById('status-banner');
 const retryBtn = document.getElementById('retry-btn');
+const deleteMeetingBtn = document.getElementById('delete-meeting-btn');
 const summaryEl = document.getElementById('summary-content');
 const transcriptEl = document.getElementById('transcript-content');
 const todoRootEl = document.getElementById('todo-root');
@@ -25,9 +26,11 @@ let transcriptCollapsed = false;
 let pollingTimer = null;
 const session = requireSession();
 const workspace = requireWorkspace();
+const canDeleteMeeting = workspace.role === 'OWNER';
 currentWorkspaceEl.textContent = workspace.name;
 currentUserEl.textContent = session.user.userId;
 logoutBtn.addEventListener('click', logoutMock);
+deleteMeetingBtn.classList.toggle('hidden', !canDeleteMeeting);
 
 function groupTodosByPerson(todos = []) {
   return todos.reduce((acc, todo) => {
@@ -193,6 +196,19 @@ downloadSummaryBtn.addEventListener('click', () => {
 retryBtn.addEventListener('click', async () => {
   await retryMeetingProcessing(meetingId);
   await renderMeeting();
+});
+
+deleteMeetingBtn.addEventListener('click', async () => {
+  if (!window.confirm('이 회의를 삭제하시겠습니까?')) {
+    return;
+  }
+
+  try {
+    await deleteMeeting(meetingId);
+    window.location.href = './index.html';
+  } catch (error) {
+    window.alert(error.message);
+  }
 });
 
 async function init() {

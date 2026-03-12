@@ -1,7 +1,8 @@
 import { getDisplayStatusMeta } from '../api/meetingsApi.js';
 import { formatDateTime, escapeHtml } from '../utils/format.js';
 
-export function createMeetingCard(meeting) {
+export function createMeetingCard(meeting, options = {}) {
+  const { canDelete = false, onDelete = null } = options;
   const article = document.createElement('article');
   const displayStatus = meeting.displayStatus || meeting.status;
   const statusMeta = getDisplayStatusMeta(displayStatus);
@@ -27,9 +28,20 @@ export function createMeetingCard(meeting) {
     <p class="meeting-card-summary">${escapeHtml(preview)}</p>
     <div class="meeting-card-foot">
       <span class="muted">${escapeHtml(meeting.sourceFileName || '파일 미등록')}</span>
-      <a class="link" href="./meeting.html?id=${encodeURIComponent(meeting.meetingId)}">상세 보기</a>
+      <div class="meeting-card-actions">
+        ${canDelete ? '<button class="meeting-card-delete" type="button" data-delete>회의 삭제</button>' : ''}
+        <a class="link" href="./meeting.html?id=${encodeURIComponent(meeting.meetingId)}">상세 보기</a>
+      </div>
     </div>
   `;
+
+  if (canDelete && typeof onDelete === 'function') {
+    const deleteBtn = article.querySelector('[data-delete]');
+    deleteBtn.addEventListener('click', (event) => {
+      event.preventDefault();
+      onDelete(meeting);
+    });
+  }
 
   return article;
 }
