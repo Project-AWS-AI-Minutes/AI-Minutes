@@ -5,7 +5,7 @@
 ## 🛠️ Tech Stack
 - **Language:** Python 3.12+ [cite: User Summary]
 - **Cloud:** AWS (S3, SQS, Transcribe) [cite: User Summary]
-- **AI Model:** Amazon Bedrock (Claude 3) [cite: User Summary]
+- **AI Model:** Amazon Bedrock (Claude 3.5 Sonnet)
 - **Libraries:** Boto3, Requests, Dotenv [cite: User Summary]
 
 ## 📂 Directory Structure

@@ -38,7 +38,7 @@
 5. Core API는 회의 생성, 상태 조회, 목록 조회, 상세 조회를 처리한다.
 6. 파일 업로드는 Core API가 발급한 Presigned URL을 이용해 브라우저에서 S3로 직접 전송한다.
 7. 업로드 완료 후 Core API가 SQS를 통해 AI Processing Service를 트리거한다.
-8. AI Processing Service는 Transcribe/Amazon Bedrock (Claude 3) 처리 후 결과를 RDS에 저장한다.
+8. AI Processing Service는 Transcribe/Amazon Bedrock (Claude 3.5 Sonnet) 처리 후 결과를 RDS에 저장한다.
 9. Frontend는 상태 polling으로 결과를 갱신한다.
 
 ### 2.3 브라우저 → ALB → API 흐름
@@ -282,7 +282,7 @@ export async function uploadToS3(uploadUrl, file) {
 ### 9.3 AI 처리 실패
 - UI 처리: 상태 `FAILED` 뱃지, 실패 안내 문구, 재처리 버튼
 - 사용자 액션: 상태 재조회 또는 재처리
-- 대상: Transcribe 실패, Amazon Bedrock (Claude 3) 실패, 결과 저장 실패
+- 대상: Transcribe 실패, Amazon Bedrock (Claude 3.5 Sonnet) 실패, 결과 저장 실패
 
 ### 9.4 사용자 메시지 기준
 - 입력 오류: `입력 값을 확인해주세요.`

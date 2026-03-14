@@ -53,6 +53,21 @@
                 "sqs:GetQueueAttributes"
             ],
             "Resource": "arn:aws:sqs:ap-northeast-2:692681389373:meetus-process-queue"
+        },
+        {
+            "Sid": "AllowTranscribeAccess",
+            "Effect": "Allow",
+            "Action": [
+                "transcribe:StartTranscriptionJob",
+                "transcribe:GetTranscriptionJob"
+            ],
+            "Resource": "*"
+        },
+        {
+            "Sid": "AllowPassRole",
+            "Effect": "Allow",
+            "Action": "iam:PassRole",
+            "Resource": "arn:aws:iam::818466672325:role/MeetUs-SA-TaskRole"
         }
     ]
 }

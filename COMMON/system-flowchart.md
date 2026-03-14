@@ -22,7 +22,7 @@ flowchart LR
         Q[SQS Queue];
         AI[AI Processing Service<br/>ECS Fargate];
         TRANS[AWS Transcribe];
-        BEDROCK["Amazon Bedrock Claude 3 API"];
+        BEDROCK["Amazon Bedrock Claude 3.5 Sonnet API"];
 
         S3[(S3 Audio Storage)];
         RDS[(RDS Database)];
@@ -78,7 +78,7 @@ flowchart LR
 2. Frontend는 Core API로 회의를 생성하고 Presigned URL을 발급받는다.
 3. Frontend는 사용자에게 Presigned URL을 전달하고, 사용자는 `m4a` 파일을 S3에 직접 업로드한다.
 4. Core API는 업로드 완료 후 SQS에 AI 처리 작업을 발행한다.
-5. AI Processing Service는 SQS를 polling하여 작업을 가져오고, S3 원본 파일을 읽어 AWS Transcribe와 Amazon Bedrock (Claude 3)를 호출한다.
+5. AI Processing Service는 SQS를 polling하여 작업을 가져오고, S3 원본 파일을 읽어 AWS Transcribe와 Amazon Bedrock (Claude 3.5 Sonnet)를 호출한다.
 6. 처리 결과는 RDS에 저장되고 Frontend는 API를 통해 상태와 결과를 조회한다.
 7. 서비스 로그와 주요 인프라 지표는 CloudWatch로 수집하고, 이상 징후는 Email로 알린다.
 
@@ -87,5 +87,5 @@ flowchart LR
 ## 4. 표현 기준
 - 서비스 라우팅은 Frontend와 API Target Group을 분리해 표현한다.
 - 업로드 흐름은 `Presigned URL 발급`과 `사용자 직접 S3 업로드`를 분리해 표현한다.
-- AI 처리 흐름은 `SQS → AI Service → Transcribe / Amazon Bedrock (Claude 3) → RDS` 구조로 고정한다.
+- AI 처리 흐름은 `SQS → AI Service → Transcribe / Amazon Bedrock (Claude 3.5 Sonnet) → RDS` 구조로 고정한다.
 - 발표용 가독성을 위해 세부 서브넷과 ECS Task Set은 생략하고, CI/CD는 배포 방향만 유지한다.

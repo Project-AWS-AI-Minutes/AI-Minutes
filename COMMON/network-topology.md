@@ -3,7 +3,7 @@
 ## 환경 구분
 - Public Subnet: ALB 및 Production Listener 진입점
 - Private Subnet: ECS 서비스, DB
-- AWS Managed AI: AWS Transcribe, Amazon Bedrock (Claude 3)
+- AWS Managed AI: AWS Transcribe, Amazon Bedrock (Claude 3.5 Sonnet)
 
 ## Mermaid Diagram
 ```mermaid
@@ -25,7 +25,7 @@ flowchart TB
     AI --> DB
     AI --> OS
     AI --> TRANS[AWS Transcribe]
-    AI --> BEDROCK[Amazon Bedrock Claude 3]
+    AI --> BEDROCK[Amazon Bedrock Claude 3.5 Sonnet]
     FE --> CWL[CloudWatch Logs]
     API --> CWL
     APIG --> CWL

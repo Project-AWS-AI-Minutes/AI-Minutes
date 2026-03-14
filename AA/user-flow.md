@@ -23,7 +23,7 @@
 1. Core API가 AI 처리 요청을 SQS에 적재한다.
 2. AI Service가 SQS 메시지를 consume하고 S3의 원본 `m4a` 파일을 조회한다.
 3. AI Service가 AWS Transcribe로 transcript를 생성한다.
-4. AI Service가 transcript를 기반으로 Amazon Bedrock (Claude 3)에 요약, 결정사항, 개인별 To-Do 생성을 요청한다.
+4. AI Service가 transcript를 기반으로 Amazon Bedrock (Claude 3.5 Sonnet)에 요약, 결정사항, 개인별 To-Do 생성을 요청한다.
 5. AI Service가 transcript, summary, decisions, todos를 RDS에 저장한다.
 6. 저장 완료 후 회의 상태를 `COMPLETED`로 변경한다.
 7. Frontend는 상세 또는 Archive에서 상태 polling으로 결과를 갱신한다.
@@ -110,7 +110,7 @@
 ### 4.3 AI 처리 예외
 - SQS 적재 실패: 처리 시작 실패 메시지와 `다시 시도` 버튼 표시
 - Transcribe 실패: 상태 `FAILED` 표시, 재처리 버튼 제공
-- Amazon Bedrock (Claude 3) 응답 실패: 상태 `FAILED` 표시, 재처리 버튼 제공
+- Amazon Bedrock (Claude 3.5 Sonnet) 응답 실패: 상태 `FAILED` 표시, 재처리 버튼 제공
 - DB 저장 실패: 상태 `FAILED` 표시, 결과 미노출
 - 자동 재시도 초과: 최종 실패 안내와 운영자 문의 또는 재처리 유도
 
@@ -137,7 +137,7 @@
 - Core API: Python API
 - Storage: AWS S3
 - Queue: AWS SQS
-- AI: AWS Transcribe + Amazon Bedrock (Claude 3)
+- AI: AWS Transcribe + Amazon Bedrock (Claude 3.5 Sonnet)
 - DB: RDS
 
 ### 5.2 사용자 행동 ↔ 시스템 처리 연결
@@ -160,7 +160,7 @@
 6. Core API가 SQS에 처리 작업 메시지를 발행한다.
 7. AI Service가 SQS 메시지를 수신하고 회의 상태를 `PROCESSING`으로 변경한다.
 8. AI Service가 S3 원본 파일을 읽어 AWS Transcribe에 전사를 요청한다.
-9. AI Service가 생성된 transcript를 기반으로 Amazon Bedrock (Claude 3)에 요약/결정사항/개인별 To-Do 생성을 요청한다.
+9. AI Service가 생성된 transcript를 기반으로 Amazon Bedrock (Claude 3.5 Sonnet)에 요약/결정사항/개인별 To-Do 생성을 요청한다.
 10. AI Service가 transcript, summary, decisions, todos를 RDS에 저장한다.
 11. 저장이 완료되면 회의 상태를 `COMPLETED`로 변경한다.
 12. 실패 시 재시도 정책을 적용하고 최종 실패 시 `FAILED`로 종료한다.

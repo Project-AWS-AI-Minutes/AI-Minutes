@@ -59,4 +59,4 @@ ai-pipeline/
 
 ## 4. 예외 및 실패 처리 (Failover)
 - **AWS API 임시 오류:** CloudWatch 로깅 후 무시하고 Exception을 던지면, 위쪽(부모) `sqs_listener`의 Try-Except 격벽에 막혀 메시지가 삭제되지 않음. 이후 SQS의 특성에 의해 잠시 후 큐에 다시 등장하여 자동으로 **재시도(Retry)** 가 이루어짐.
-- **포맷 추출 실패:** Claude 3가 가끔 JSON 규격을 지키지 않을 때를 대비해 파서(`json.loads`) 에러를 뿜게 하여 위 재시도 매커니즘을 그대로 타게 구성함.
+- **포맷 추출 실패:** Claude 3.5 Sonnet이 가끔 JSON 규격을 지키지 않을 때를 대비해 파서(`json.loads`) 에러를 뿜게 하여 위 재시도 매커니즘을 그대로 타게 구성함.

@@ -8,6 +8,56 @@
 3. **의존성 확인 (필요 시):** `pip install -r requirements.txt`
 4. **도구 작동 확인:** `git --version` 및 `aws --version` 체크
 
+## 📐 프로젝트 환경 및 규칙 (Environment & Conventions)
+### 공통 기술 스택 (버전 통일 엄수)
+* **OS:** `Ubuntu 24.04 LTS` (로컬 및 Docker 베이스 이미지 표준)
+* **Node.js:** `v24.14.0` (NVM을 통한 관리 권장)
+* **Python:** `3.12` (반드시 `venv` 가상환경 위에서 의존성 격리 후 실행)
+
+### 네이밍 컨벤션 (Naming Conventions)
+* **데이터베이스 (DB):** 모든 테이블명 및 컬럼명은 `snake_case`를 사용합니다. (예: `meeting_id`, `created_at`)
+* **기본키 (PK):** 모든 DB 테이블의 PK는 내부적으로 큰 정수타입을 사용합니다. (`Long`, 파이썬 `int`)
+* **API 및 코드 레벨 (Python):** 전사 백엔드가 파이썬(Python) 기반이므로, 모든 변수명과 API 응답 필드명은 `snake_case`를 엄수합니다.
+
+### Git 브랜치 전략
+* **작업 규칙:** 모든 기능 개발은 각자의 역할이 명시된 `feat/[이름]-[역할]` 브랜치에서 진행 후 Pull Request(PR)를 통해 병합합니다. (예: `feat/juhn-sa`)
+
+## 🧠 SA 내부 아키텍처 및 모듈 설계
+### 디렉토리 구조 (Directory Layout)
+AI 로직은 유지보수와 단위 테스트(Unit Test)의 용이성을 위해 단일 스크립트가 아닌, 철저히 분리된 역할 단위로 구성됩니다.
+
+```text
+ai-pipeline/
+├── .env                  # (Git 제외) AWS 연동 핵심 보안 키 
+├── docs/                 # 기획, 아키텍처, 기능 명세 및 플레이북 가이드
+└── src/                  # 파이썬 메인 소스코드 디렉토리
+    ├── config.py         # 1. 중앙 환경 변수 로드 및 통제소
+    ├── sqs_listener.py   # 2. 메시지 수신 및 전체 파이프라인(Main) 컨트롤러 
+    ├── core/             # 3. AI 변환 코어 비즈니스 로직
+    │   ├── stt_processor.py # 음성 -> 텍스트 변환 (AWS Transcribe, S3 URI 보정 포함)
+    │   └── llm_processor.py # 텍스트 -> 요약/할일 JSON 변환 (Amazon Bedrock Claude 3.5 Sonnet)
+    └── network/          # 4. 외부 통신 로직
+        └── api_client.py    # 결과물 DB 적재를 위한 Core API 서버 통신
+```
+
+### 모듈별 세부 역할 및 Flow
+#### ⚙️ 시스템 컨트롤: `config.py` & `sqs_listener.py`
+*   `config.py`: `.env` 파일을 로드하여 AWS 키 등을 파이썬 변수로 메모리에 올립니다. 모든 보안 키는 오직 여기서만 관리됩니다.
+*   `sqs_listener.py`: 파이프라인의 심장입니다. AWS SQS를 24시간 롱 폴링(20초 대기)하다가 `UPLOADED` 이벤트 메시지가 오면 낚아채서 `stt` -> `llm` -> `api` 모듈들을 순서대로 지휘(Orchestrate)합니다. **(최대 3회 실패 시 FAILED 처리 로직 포함)**
+
+#### 🧠 코어 로직: `stt_processor.py` & `llm_processor.py`
+*   `stt_processor.py`: SQS 메시지에 담긴 S3 오디오 파일(`m4a`) URI를 받아 AWS Transcribe에 던지고, 작업이 완료되면 전체 원본 텍스트를 추출해서 반환합니다. (URI 접두사 누락 시 자동 보정 로직 내장)
+*   `llm_processor.py`: STT 텍스트를 입력받아 프롬프트 엔지니어링을 거쳐 다음 두 가지를 완수합니다. (Claude 3.5 Sonnet 활용)
+    1.  전체 5~7줄 요약 및 결정사항 추출
+    2.  `assignee`, `task`, `due_date` 필드를 가진 담당자별 To-Do 배열을 완벽한 JSON 형식으로 추출.
+
+#### 📡 백엔드 송신: `api_client.py`
+*   `api_client.py`: AI 처리가 완료(`COMPLETED`)되거나 실패(`FAILED`)했을 때 TA(Core API) 서버로 HTTP POST 요청을 쏴서 DB에 결과가 적재되도록 만드는 우체부 역할입니다.
+
+### 개발 및 테스트 가이드(로컬)
+*   **STT 단위 테스트:** SQS 없이 임시 S3 오디오 URI만 `stt_processor.py`에 강제로 주입하여 텍스트가 잘 나오는지 테스트.
+*   **LLM 단위 테스트:** 추출된 이전 회의록 더미 텍스트를 `llm_processor.py`에 강제로 주입하여 요약본과 JSON 파싱이 완벽하게 나오는지 테스트.
+
 ## ✅ 성공한 환경 설정 이력
 ### [2026-03-02] 가상환경 및 라이브러리 셋업 완료
 - **작업 내용:** Python 3.12 기반 venv 구축 및 주요 라이브러리(boto3, python-dotenv, requests) 설치 성공.
@@ -72,6 +122,42 @@
    - **문제:** 태스크 정의의 컨테이너 이름을 리포지토리명(`ai-minutes-sa`)과 맞추려다 기존 설정과 충돌 발생.
    - **원인:** 백엔드(TA) 및 기존 인프라가 `meetus-sa-container`라는 이름을 기반으로 세팅되어 있었음.
    - **해결:** 인프라 파츠 간의 약속된 컨벤션(`meetus-sa-container`)으로 이름을 원복하여 연동 무결성 확보.
+15. **[공통/보안] Identity Hijack (정적 키 vs IAM Role 충돌)**
+    - **문제:** ECS Task Role을 설정했음에도 불구하고, 엔진이 선영님 S3 버킷 접근 시 `AccessDenied` 발생.
+    - **원인:** 로컬 테스트 시 사용하던 `.env` 파일의 `AWS_ACCESS_KEY_ID`가 도커 환경변수나 시스템 변수에 남아있어, Boto3가 Task Role보다 정적 키를 우선시하여 '허락받지 않은 신분(User)'으로 접근하려 함.
+    - **해결:** `.env` 및 배포 설정에서 모든 정적 키를 제거하고, `sts get-caller-identity` 로그를 통해 신분이 `assumed-role/MeetUs-SA-TaskRole`임을 최종 확인하여 해결.
+16. **[STT/보안] Transcribe 최종 연동 해결 (코드-권한 3단 합체)**
+    - **문제**: Transcribe Job이 계속 `BadRequest` 또는 `AccessDenied`로 실패함.
+    - **원인**: 단순히 권한만 준다고 되는 것이 아니라, **코드 상의 호출 옵션**과 **인프라 권한**이 1:1로 맞물려야 했음.
+        - 1) 기초 권한: `MeetUs-SA-TaskRole`에 `transcribe:*` 액션 자체가 누락됨.
+        - 2) 신뢰 관계: Role의 Trust Policy에 `transcribe.amazonaws.com` 서비스 추가 필요.
+        - 3) 코드: `DataAccessRoleArn` 옵션 누락 시 타 계정 S3 접근 불가.
+        - 4) IAM: `iam:PassRole` 권한 누락 시 코드의 `DataAccessRoleArn` 사용 불가.
+        - 5) S3: `s3:GetBucketLocation` 누락 시 서비스 수준에서 버킷 위치 파악 불가.
+    - **해결**: 
+        - [IAM] 정책에 `transcribe:StartTranscriptionJob`, `transcribe:GetTranscriptionJob` 추가.
+        - [Trust] Role 신뢰 관계 편집기에서 `transcribe.amazonaws.com` 서비스 신뢰 주체 추가.
+        - [코드] `stt_processor.py`에 `JobExecutionSettings`와 `DataAccessRoleArn` 로직을 정확히 구현.
+        - [IAM] `MeetUs-SA-TaskRole`에 스스로에 대한 `iam:PassRole` 허용.
+        - [S3] 타 계정 버킷 정책에 `s3:GetBucketLocation` 명시적 허가.
+    - **통찰**: '명령어(Code)'와 '허가증(Permission)'이 동시에 준비되어야만 작동하는 AWS 네이티브 서비스의 특성을 완벽히 정복함.
+17. **[배포] CI/CD 브랜치 불일치로 인한 배포 미반영 (Sync Drift)**
+    - **문제**: 깃허브에 코드를 푸시하고 로그에 성공이 뜨는데, 실제 ECS 로그에는 수정 전 코드가 계속 돌아가고 있음.
+    - **원인**: `deploy-sa.yml` 워크플로우가 `main` 브랜치 푸시 시에만 작동하도록 설정되어 있었으나, 주환님은 `feat/juhn-sa` 브랜치에서 작업 중이었음. (액션이 아예 트리거되지 않음)
+    - **해결**: 작업 브랜치를 `main`으로 머지(Merge)하여 배포 자동화를 정상 가동시키고, ECS 태스크 버전이 최신(v12 이상)으로 올라간 것을 확인하여 해결.
+18. **[CI/CD] GitHub Actions의 '거짓 성공' 트랩 (Asynchronous Update)**
+    - **문제**: GitHub Actions 워크플로우는 초록색 체크표시(Success)인데, 실제 AWS 서버는 구버전이 돌고 있음.
+    - **고생한 기록**: 10번 넘게 푸시하며 "왜 액션은 성공인데 서버는 그대로지?"라며 멘붕에 빠짐.
+    - **깨달음**: `aws ecs update-service` 명령은 '명령 전달'만 성공하면 즉시 종료됨. 실제 배포는 그 후 AWS 내부에서 천천히 일어나며, 이 과정에서 오류가 나면 ECS가 조용히 롤백(Rollback)해버림.
+    - **진화**: 워크플로우에 `wait-for-service-stability: true` 옵션을 추가하여, 실제 배포가 완전히 끝날 때까지 GitHub Actions가 기다리도록 개선함.
+19. **[ECS] 태스크 무한 종료 및 롤백 (The Resource Ghost)**
+    - **문제**: 분명 소스코드는 완벽한데, ECS 태스크가 켜지자마자 `ResourceNotFoundException`을 뱉으며 1초 만에 죽어버림.
+    - **고생한 기록**: 태스크 정의를 8번에서 12번까지 계속 새로 만들어도 소용없었음.
+    - **진범**: **CloudWatch Log Group**. 설정 파일(JSON)에는 로그를 남길 주소(`/ecs/meetus-sa-container`)가 적혀 있었지만, 실제 AWS 서비스 상에 그 '방(Group)'이 생성되어 있지 않았음.
+    - **해결**: 직접 AWS 콘솔에서 로그 그룹을 생성한 후, **[새 배포 강제]**를 통해 꼬여있던 롤백 루프를 끊어냄.
+20. **[성장 통찰] 단순히 "할 줄 안다"를 넘어선 "헤쳐나가는 힘"**
+    - 이번 프로젝트를 통해 배운 가장 큰 교훈은 **"클라우드 인프라는 선언(JSON)과 실체(Resource)가 일치해야 한다"**는 점입니다. 
+    - 깃허브 액션의 초록불 뒤에 숨겨진 ECS의 고군분투를 이해하게 되었고, 오류 로그 한 줄(`ResourceNotFound`)이 단순히 서버가 안 된다는 뜻이 아니라 '어떤 부품이 빠졌는지'를 알려주는 이정표임을 깨닫게 된 뜻깊은 과정이었습니다.
 
 ## 🛠️ 향후 작업 예정 로직 (Draft)
 - SQS 리스너 구현 시 `WaitTimeSeconds=20` 설정을 통해 비용 최적화(Long Polling) 적용 예정.
@@ -111,6 +197,30 @@
 - **ALB-Less 구조:** 외부 인바운드 트래픽이 없는 구조적 특성상, Blue/Green 배포를 위해 불필요하게 로드 밸런서(ALB)를 추가하여 인프라 비용과 복잡도를 높이는 대신, 현 구조에 최적화된 가장 가볍고 강력한 배포 방식을 선택했습니다.
 - **환경 변수 및 IAM Role 통합:** `latest` 태그와 `taskRoleArn`을 활용하여 배포 즉시 최신 보안 설정과 기능이 반영되도록 설계했습니다.
 
+### 7️⃣ [STT 기술 세부 명세] AWS Transcribe 연동 상세 (TRANSCRIBE_TECH_SPEC)
+`STTProcessor` 클래스는 AWS SDK(Boto3)를 사용하여 Transcribe 서비스와 통신하며, 단일 책임 원칙(Single Responsibility)을 준수하도록 설계되었습니다.
+
+#### 핵심 속성
+- **Client**: `boto3.client('transcribe')`
+- **DataAccessRoleArn**: 크로스 계정 S3 접근의 '열쇠'입니다.
+
+> [!IMPORTANT]
+> **성공의 핵심 (The Alignment)**: 단순히 권한만 주는 것이 아니라, **코드(DataAccessRoleArn)** + **IAM(PassRole)** + **S3(Location)** 권한이 동시에 정렬되어야만 작동합니다.
+
+#### 상세 처리 프로세스
+1. **Transcription Job 생성**: 매 호출마다 `ai_minutes_job_{uuid}` 고유 ID를 생성. `MediaFormat: m4a`, `LanguageCode: ko-KR` 고정.
+2. **크로스 계정 보안 설정**: `DataAccessRoleArn`이 설정되어 있으면 `JobExecutionSettings`에 자동 포함. 이때 `iam:PassRole` 권한 필수.
+3. **상태 모니터링 (Polling)**: 5초 간격으로 `get_transcription_job` 호출하여 `COMPLETED`/`FAILED` 확인.
+4. **결과 데이터 파싱**: 결과물은 S3 임시 URL에 JSON으로 저장. `urllib.request`로 경량 다운로드하여 `data['results']['transcripts'][0]['transcript']` 추출.
+
+#### STT 주요 설정값 요약
+| 설정 항목 | 값 | 설명 |
+| :--- | :--- | :--- |
+| 리전 | `ap-northeast-2` | 서울 리전 고정 |
+| 언어 | `ko-KR` | 한국어 분석 모드 |
+| 파일 형식 | `m4a` | MPEG-4 오디오 지원 |
+| 폴링 주기 | `5 seconds` | 실시간성 확보를 위한 주기 |
+
 ---
 
 ## 🔄 문서 변경 이력 (Audit Trail)
@@ -140,12 +250,13 @@
   1. AWS Transcribe를 호출하고 결과를 가져오는 STT 코어 모듈 작성 (m4a, ko-KR 기준).
    2. Core API(FastAPI)와 통신하여 상태 업데이드 및 최종 결과(JSON)를 전송하는 우체부 API Client 구비.
    3. 전체 파이프라인(STT->LLM->API_CLIENT)을 통합하여 24시간 롱 폴링(Long Polling)으로 큐를 감시하는 메인 컨트롤러 SQS Listener 조립 완료.
+   4. [상세 명세] [AWS Transcribe 기술 세부 명세](file:///home/ubuntu/workspace/AI-Minutes/ai-pipeline/docs/TRANSCRIBE_TECH_SPEC.md)를 작성하여 STT 처리 전 과정을 문서화함.
 
 ### 🔄 [변경/수정: MODIFICATION]
 - **일시:** 2026-03-05
 - **변경 위치:** AI 파이프라인 전역 (`src/core/llm_processor.py`, `config.py`, `README.md`, `SA-Todo.md`, `ARCHITECTURE.md`)
 - **변경 전:** LLM 요약 본체로 외부 API인 `OpenAI (GPT-4o)` 사용 및 `OPENAI_API_KEY` 환경변수 세팅 요구.
-- **변경 후:** 외부 유출 보안 및 아키텍처 일관성(All AWS) 확보를 위해 `Amazon Bedrock (Claude 3 Sonnet)`으로 전면 마이그레이션 적용 및 `openai` 라이브러리/키 완전 제거.
+- **변경 후:** 외부 유출 보안 및 아키텍처 일관성(All AWS) 확보를 위해 `Amazon Bedrock (Claude 3.5 Sonnet)`으로 전면 마이그레이션 적용 및 `openai` 라이브러리/키 완전 제거.
 - **수정 사유:** 비즈니스 요구사항(AWS 내부 보안 처리)을 충족하면서 비용 및 설정 복잡도를 최적화하기 위함.
 
 ### 🔄 [변경/수정: MODIFICATION]

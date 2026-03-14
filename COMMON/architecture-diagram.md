@@ -10,7 +10,7 @@
 - Object Storage(오디오/결과 파일)
 - CloudWatch Logs / CloudWatch Alarms
 - Email Alert
-- AWS Transcribe + Amazon Bedrock (Claude 3)
+- AWS Transcribe + Amazon Bedrock (Claude 3.5 Sonnet)
 
 ## Mermaid Diagram
 ```mermaid

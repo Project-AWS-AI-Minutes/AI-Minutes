@@ -1,7 +1,7 @@
 # 🚀 SA (AI 파이프라인) 작업 WBS 및 To-Do List
 
 **담당자:** 주환 (SA)
-**목표:** AWS 내부망(All AWS) 아키텍처를 기반으로 SQS 메시지를 수신하여 음성을 텍스트로 변환(Transcribe)하고, Bedrock(Claude 3)을 통해 요약 및 To-Do를 추출하여 Core API 웹훅으로 전달한다.
+**목표:** AWS 내부망(All AWS) 아키텍처를 기반으로 SQS 메시지를 수신하여 음성을 텍스트로 변환(Transcribe)하고, Bedrock(Claude 3.5 Sonnet)을 통해 요약 및 To-Do를 추출하여 Core API 웹훅으로 전달한다.
 
 ## 🏃‍♂️ Phase 1: 개발 환경 및 클라우드 연동 세팅 (완료)
 - [v] 파이썬 가상환경 세팅 및 필수 라이브러리 설치 (`boto3`, `requests`, `python-dotenv`)
@@ -11,7 +11,7 @@
 
 ## 📡 Phase 2: 코어 비즈니스 로직 (AI 엔진) 모듈화 (완료)
 - [v] `src/core/stt_processor.py`: AWS Transcribe API 연동 (작업 시작, Polling 및 텍스트 반환)
-- [v] `src/core/llm_processor.py`: Amazon Bedrock (Claude 3 Sonnet) 연동
+- [v] `src/core/llm_processor.py`: Amazon Bedrock (Claude 3.5 Sonnet) 연동
   - *Point:* 지정된 JSON 형태(`assignee`, `task`, `due_date`)로만 응답받도록 마스터 프롬프트 작성
 - [v] `src/network/api_client.py`: Core API에 최종 결과(summaries, todos)를 JSON으로 전송하는 모듈 구현 완료
 
