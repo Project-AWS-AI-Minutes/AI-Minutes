@@ -1,3 +1,5 @@
+[전체 프로젝트](../README.md) | **AA (Frontend)** | [TA (Backend)](../TA/README.md) | [SA (AI Pipeline)](../SA/README.md)
+
 # AA 작업 증적 (Frontend / Integration / Infra)
 
 
