@@ -130,7 +130,7 @@ ai-pipeline/
 
 AWS Transcribe를 통해 m4a 음성을 한국어 텍스트로 변환한다.
 
-- **크로스 계정 접근:** TA 계정의 S3 버킷에 접근하기 위해 `DataAccessRoleArn` 설정
+- **크로스 계정 접근:** AA 계정의 S3 버킷에 접근하기 위해 `DataAccessRoleArn` 설정
 - **S3 URI 자동 보정:** `s3://` 접두사 누락 시 자동 보정 로직 내장
 - **Polling 방식:** 5초 간격으로 상태 확인하여 `COMPLETED`/`FAILED` 감지
 
